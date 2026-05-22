@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,sans-serif;background:#faf8f3;color:#18130c;font-size:13px;line-height:1.5}
+:root{--gold:#b07d2a;--rust:#a83820;--forest:#254d38;--onsen:#3a6b7a;--ink:#18130c;--cream:#faf8f3;--warm:#f3ede2;--border:#ddd5c2}
+.topnav{background:var(--ink);display:flex;overflow-x:auto;padding:0 10px;position:sticky;top:0;z-index:50;align-items:center}
+.brand{color:#e8c96a;font-size:14px;font-weight:700;padding:10px 10px 10px 0;white-space:nowrap;flex-shrink:0}
+.topnav a{color:rgba(255,255,255,.7);text-decoration:none;padding:10px 10px;font-size:11px;font-weight:500;white-space:nowrap;cursor:pointer}
+.topnav a:hover{color:#e8c96a}
+.hero{background:linear-gradient(135deg,#14100a,#261a0e 60%,#192a22);padding:30px 16px;text-align:center}
+.hero h1{font-size:26px;color:#fff;font-weight:700;line-height:1.2;margin-bottom:8px}
+.hero h1 em{color:#e8c96a;font-style:italic}
+.hero-sub{color:rgba(255,255,255,.6);font-size:12px;margin-bottom:14px}
+.tags{display:flex;gap:5px;justify-content:center;flex-wrap:wrap}
+.tag{background:rgba(176,125,42,.2);border:1px solid rgba(176,125,42,.4);color:#e8c96a;padding:3px 9px;border-radius:20px;font-size:10.5px}
+.wrap{max-width:960px;margin:0 auto;padding:20px 14px}
+.sec{margin-bottom:32px}
+.sec-title{font-size:17px;font-weight:700;color:var(--ink);margin-bottom:6px;padding-bottom:5px;border-bottom:2px solid var(--gold);display:flex;align-items:center;gap:8px}
+.sec-sub{font-size:11.5px;color:#6b5c48;margin-bottom:12px}
+.sum-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px;margin-bottom:24px}
+.sum-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 11px}
+.sum-card .lbl{font-size:9.5px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);font-weight:600;margin-bottom:2px}
+.sum-card .val{font-size:15px;font-weight:700;color:var(--ink);line-height:1.2}
+.sum-card .sub{font-size:10.5px;color:#8a7a65;margin-top:2px}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+thead tr{background:var(--ink)}
+thead th{color:#e8c96a;font-size:9.5px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:9px 11px;text-align:left}
+tbody tr{border-bottom:1px solid var(--border)}
+tbody tr:last-child{border-bottom:none}
+tbody td{padding:9px 11px;font-size:12px;vertical-align:top}
+.hl{font-weight:600;color:var(--forest)}
+.price{font-weight:700;color:var(--rust);font-size:13px}
+.note{font-size:11px;color:#7a6850}
+.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600}
+.bg{background:#d6f0e4;color:#1a5c35}.ba{background:#fdecd0;color:#8a4a00}.bb{background:#d4e8f5;color:#1a4060}
+.cr{cursor:pointer}.cr:hover td{background:#fffaf0!important}
+.hotel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.hcard{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:box-shadow .2s,transform .2s}
+.hcard:hover{box-shadow:0 4px 16px rgba(176,125,42,.15);transform:translateY(-2px)}
+.hcard-img{width:100%;height:150px;object-fit:cover;background:#e8e0d5;display:block}
+.hcard-body{padding:14px}
+.hcard h3{font-size:13.5px;font-weight:700;margin-bottom:2px}
+.hloc{font-size:11px;color:var(--onsen);margin-bottom:6px}
+.hstars{color:var(--gold);font-size:12px;margin-bottom:5px}
+.hdesc{font-size:11.5px;color:#5a4e3e;margin-bottom:8px;line-height:1.45}
+.hprice{font-size:15px;font-weight:700;color:var(--rust)}
+.hint{font-size:10px;color:var(--gold);margin-top:4px}
+.obadge{display:inline-flex;background:#d9eff5;color:var(--onsen);border-radius:20px;padding:2px 7px;font-size:10px;font-weight:600;margin-bottom:5px}
+.day-block{background:#fff;border:1px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden}
+.day-hdr{display:flex;background:linear-gradient(90deg,var(--ink),#261a0e)}
+.day-num{background:var(--gold);color:var(--ink);padding:11px 14px;min-width:68px;text-align:center;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.day-num .d{font-size:19px;font-weight:700;line-height:1}
+.day-num .lw{font-size:9px;font-weight:600;margin-top:1px}
+.day-tw{padding:11px 14px}
+.day-ttl{font-size:14px;color:#fff;font-weight:600;line-height:1.2}
+.day-ds{font-size:10px;color:rgba(255,255,255,.5);margin-top:2px}
+.dtbl{width:100%;border-collapse:collapse}
+.dtbl thead tr{background:var(--warm)}
+.dtbl thead th{color:var(--ink);font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:6px 11px;text-align:left;border-bottom:1.5px solid var(--border)}
+.dtbl tbody tr{border-bottom:1px solid var(--border)}
+.dtbl tbody tr:last-child{border-bottom:none}
+.dtbl tbody tr.cr:hover td{background:#fffaf0!important}
+.dtbl td{padding:8px 11px;font-size:12px;vertical-align:top}
+.tc{font-weight:600;color:var(--gold);white-space:nowrap;font-size:11px;min-width:76px}
+.spot{font-weight:600;color:var(--forest);display:block;margin-bottom:1px}
+.desc{font-size:11px;color:#6b5c48;line-height:1.4}
+.cc{font-weight:700;color:var(--rust);white-space:nowrap;font-size:11.5px;min-width:78px}
+.mr td{background:#f3faf6}.or td{background:#fdf5e8}.dr td{background:#f5f0fa}
+.oi{color:var(--gold);font-size:10px;margin-left:2px}
+/* MAP */
+#trip-map{height:440px;border-radius:10px;margin-bottom:10px;z-index:1}
+.mleg{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.mleg-i{display:flex;align-items:center;gap:5px;font-size:11.5px;color:#5a4e3e}
+.mleg-d{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+/* SIDEBAR */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200}
+.overlay.on{display:block}
+.sidebar{position:fixed;right:-580px;top:0;width:min(560px,100vw);height:100vh;background:var(--cream);z-index:201;overflow-y:auto;transition:right .3s;box-shadow:-4px 0 24px rgba(0,0,0,.2)}
+.sidebar.on{right:0}
+.sb-hdr{position:sticky;top:0;background:var(--ink);color:#fff;border:none;width:100%;padding:11px 16px;cursor:pointer;font-size:12px;font-weight:500;display:flex;align-items:center;justify-content:space-between;z-index:10}
+.sb-ttl-text{font-size:13px;color:#e8c96a;font-weight:600}
+.sb-body{padding:18px}
+.sb-photos{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:16px}
+.sb-photos img{width:100%;height:140px;object-fit:cover;border-radius:7px;background:#e0d8cc}
+.sb-photos img.wide{grid-column:1/-1;height:180px}
+.sb-photos img.loading{filter:blur(2px)}
+.sb-title{font-size:19px;font-weight:700;margin-bottom:3px;line-height:1.2}
+.sb-sub{font-size:11.5px;color:var(--onsen);margin-bottom:14px}
+.sbsec{margin-bottom:16px}
+.sbsec h4{font-size:9.5px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;color:var(--gold);margin-bottom:6px}
+.sbsec p{font-size:12.5px;color:#4a3e30;line-height:1.6}
+.sb-revs{display:flex;flex-direction:column;gap:8px}
+.sb-rev{background:#fff;border:1px solid var(--border);border-radius:6px;padding:9px 11px}
+.sb-rev .rb{font-weight:600;font-size:11px;margin-bottom:2px}
+.sb-rev .rt{font-size:12px;color:#5a4e3e;font-style:italic;line-height:1.5}
+.sb-rev .rs{color:var(--gold);font-size:11px;margin-bottom:2px}
+.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+.menu-item{background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 10px}
+.menu-item .mi-name{font-size:12px;font-weight:600;color:var(--forest)}
+.menu-item .mi-desc{font-size:11px;color:#7a6850;margin-top:2px;line-height:1.4}
+.menu-item .mi-price{font-size:12px;font-weight:700;color:var(--rust);margin-top:3px}
+.pc{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:7px;margin-bottom:11px}
+.pb{background:#fff;border:1px solid var(--border);border-radius:6px;padding:9px;text-align:center}
+.pb .ps{font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#7a6850;margin-bottom:2px}
+.pb .pa{font-size:16px;font-weight:700;color:var(--rust)}
+.pb .pn{font-size:10px;color:#9a8a78;margin-top:1px}
+.lnks{display:flex;flex-wrap:wrap;gap:5px}
+.lnk{display:inline-flex;align-items:center;gap:4px;padding:6px 11px;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none;cursor:pointer;border:none;white-space:nowrap}
+.lp{background:var(--ink);color:#e8c96a}.ls{background:#fff;color:var(--ink);border:1px solid var(--border)}.lb{background:#003580;color:#fff}.lt{background:#34e0a1;color:#000}.lk{background:#ff5722;color:#fff}.ltb{background:#c00;color:#fff}.lgm{background:#34a853;color:#fff}.ltr{background:#1da462;color:#fff}
+.sb-tip{background:var(--warm);border-left:3px solid var(--gold);padding:8px 11px;font-size:12px;color:#5a4e3e;line-height:1.5;margin-top:10px;border-radius:0 4px 4px 0}
+.photo-credit{font-size:10px;color:#9a8a78;text-align:right;margin-top:4px;margin-bottom:8px}
+/* COST BOX */
+.cost-box{background:linear-gradient(135deg,var(--ink),#261a0e);color:#fff;border-radius:10px;padding:22px;margin-top:12px}
+.cost-box h3{font-size:17px;color:#e8c96a;margin-bottom:14px}
+.cg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px;margin-bottom:18px}
+.ci .cl{font-size:9.5px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.5);margin-bottom:2px}
+.ci .cv{font-size:17px;color:#fff;font-weight:700}
+.ci .cn{font-size:9.5px;color:rgba(255,255,255,.4);margin-top:1px}
+.cgrand{border-top:1px solid rgba(255,255,255,.2);padding-top:14px}
+.cgrand .gl{font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:#e8c96a}
+.cgrand .ga{font-size:32px;font-weight:700;color:#fff;line-height:1;margin-top:3px}
+.cgrand .gn{font-size:10.5px;color:rgba(255,255,255,.5);margin-top:4px}
+/* TIPS */
+.tips-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:9px}
+.tip{background:#fff;border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:6px;padding:11px 13px}
+.tip h4{font-size:12px;font-weight:700;margin-bottom:3px}
+.tip p{font-size:11.5px;color:#6b5c48;line-height:1.5}
+footer{background:var(--ink);color:rgba(255,255,255,.4);text-align:center;padding:16px;font-size:11px}
+footer strong{color:#e8c96a}
+.highlight-marker{animation:pulse 1.5s ease-in-out 3}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.4)}}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+<span class="brand">🗾 Fukuoka &amp; Kyushu</span>
+<a onclick="s('flights')">✈ Flights</a>
+<a onclick="s('hotels')">🏨 Hotels</a>
+<a onclick="s('rests')">🍽 Restaurants</a>
+<a onclick="s('mapSec')">🗺 Map</a>
+<a onclick="s('itin')">📅 Itinerary</a>
+<a onclick="s('budget')">💰 Budget</a>
+<a onclick="s('tips')">💡 Tips</a>
+</nav>
+
+<div class="hero">
+<h1>Fukuoka <em>&amp;</em> Kyushu — 12-Day Journey</h1>
+<p class="hero-sub">Late Aug – Early Sep · Takachiho Gorge · Private Onsens · Car Rental Loop · Click anything to explore</p>
+<div class="tags">
+<span class="tag">📅 Aug 29 – Sep 10</span>
+<span class="tag">✈ Direct SIN→FUK</span>
+<span class="tag">🚗 Car Rental Days 4–8</span>
+<span class="tag">♨ Private Onsen Nights</span>
+<span class="tag">👆 Click rows &amp; cards for photos + details</span>
+<span class="tag">🗺 Click map markers for info</span>
+</div>
+</div>
+
+<div class="wrap">
+
+<div class="sum-grid">
+<div class="sum-card"><div class="lbl">Duration</div><div class="val">12 Days</div><div class="sub">Aug 29 – Sep 9</div></div>
+<div class="sum-card"><div class="lbl">Flight</div><div class="val">~6 hrs</div><div class="sub">SQ656 daily direct</div></div>
+<div class="sum-card"><div class="lbl">Rate</div><div class="val">¥124/SGD</div><div class="sub">May 2026 near all-time high</div></div>
+<div class="sum-card"><div class="lbl">City Hotel</div><div class="val">Royal Park Canvas</div><div class="sub">Nakasu Days 1–4, 8–12</div></div>
+<div class="sum-card"><div class="lbl">Onsen Stays</div><div class="val">3 Nights</div><div class="sub">Kurokawa (1) + Yufuin (2)</div></div>
+<div class="sum-card"><div class="lbl">Car Rental</div><div class="val">Days 4–8</div><div class="sub">Aso·Takachiho·Kurokawa·Yufuin</div></div>
+</div>
+
+<!-- FLIGHTS -->
+<div class="sec" id="flights">
+<div class="sec-title">✈ Flights — Singapore → Fukuoka (Direct)</div>
+<p class="sec-sub">Click any row for booking links. All prices round-trip per pax, late Aug/early Sep. Book by end of June.</p>
+<table>
+<thead><tr><th>Airline</th><th>Route</th><th>Duration</th><th>Est. R/T per pax</th><th>Notes</th></tr></thead>
+<tbody>
+<tr class="cr" onclick="op('sq')"><td class="hl">Singapore Airlines SQ656 <span class="oi">›</span></td><td><span class="badge bg">Direct</span></td><td>~6 hrs</td><td class="price">SGD 1,100–1,400</td><td class="note">Daily. Meals &amp; bags included.</td></tr>
+<tr class="cr" onclick="op('scoot')"><td class="hl">Scoot (TR) <span class="oi">›</span></td><td><span class="badge bg">Direct</span></td><td>~6 hrs</td><td class="price">SGD 450–700</td><td class="note">Budget. Add baggage. Book early.</td></tr>
+<tr class="cr" onclick="op('peach')"><td class="hl">Peach Aviation <span class="oi">›</span></td><td><span class="badge bg">Direct</span></td><td>~6 hrs</td><td class="price">SGD 400–650</td><td class="note">Japanese LCC. Bare-bones fares.</td></tr>
+</tbody></table>
+</div>
+
+<!-- HOTELS -->
+<div class="sec" id="hotels">
+<div class="sec-title">🏨 Accommodation — 3 Bases Over 12 Days</div>
+<p class="sec-sub">Click any card for full details, photos, guest reviews, price comparison across booking sites, and direct links.</p>
+<div class="hotel-grid">
+<div class="hcard" onclick="op('canvas')">
+<img class="hcard-img" src="https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=600&q=80" alt="Royal Park Canvas Fukuoka" onerror="this.src='https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80'">
+<div class="hcard-body">
+<div class="hstars">★★★★</div>
+<div class="obadge">♨ Public Bath + Sauna</div>
+<h3>The Royal Park Canvas Fukuoka Nakasu</h3>
+<div class="hloc">📍 Nakasu, Hakata — Days 1–4 &amp; 8–12 (7 nights)</div>
+<p class="hdesc">Nature-inspired 4-star on the Hakata River. Forest interiors, JBL speakers, Netflix, river-view balconies. ONO HAKATA restaurant, public bath &amp; sauna. Steps to yatai and Canal City.</p>
+<div><span class="hprice">SGD 200–280/night</span></div>
+<div class="hint">👆 Click for photos, reviews &amp; booking</div>
+</div>
+</div>
+<div class="hcard" onclick="op('kurokawa')">
+<img class="hcard-img" src="https://images.unsplash.com/photo-1540541338537-1220205ac580?w=600&q=80" alt="Kurokawa Onsen Ryokan" onerror="this.src='https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=600&q=80'">
+<div class="hcard-body">
+<div class="hstars">★★★★★</div>
+<div class="obadge">♨ Private In-Room Open-Air Onsen</div>
+<h3>Kurokawa Onsen Ryokan</h3>
+<div class="hloc">📍 Kurokawa Village, Kumamoto — Day 5 (1 night)</div>
+<p class="hdesc">All suites with private open-air baths, mountain forest views. Full kaiseki dinner + breakfast included. 300 bamboo lanterns at night.</p>
+<div><span class="hprice">SGD 400–730/night (incl. meals)</span></div>
+<div class="hint">👆 Click for photos, reviews &amp; booking</div>
+</div>
+</div>
+<div class="hcard" onclick="op('yufuin')">
+<img class="hcard-img" src="https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=600&q=80" alt="Yufuin Onsen Ryokan" onerror="this.src='https://images.unsplash.com/photo-1574019069304-f7f9b7da3f65?w=600&q=80'">
+<div class="hcard-body">
+<div class="hstars">★★★★★</div>
+<div class="obadge">♨ Private Outdoor Onsen, Mt. Yufu View</div>
+<h3>Yufuin Onsen Ryokan</h3>
+<div class="hloc">📍 Yufuin, Oita — Days 6–7 (2 nights)</div>
+<p class="hdesc">Private villa-style rooms with outdoor onsen baths facing Mt. Yufu. Walkable to Lake Kinrin. Kaiseki dinner + breakfast both nights.</p>
+<div><span class="hprice">SGD 380–640/night (incl. meals)</span></div>
+<div class="hint">👆 Click for photos, reviews &amp; booking</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- RESTAURANTS -->
+<div class="sec" id="rests">
+<div class="sec-title">🍽 Restaurant Guide — All 9 Evaluated</div>
+<p class="sec-sub">Click any row for photos, menu highlights, reviews and map links.</p>
+<table>
+<thead><tr><th>Restaurant</th><th>Specialty</th><th>Rating</th><th>Cost (2 pax)</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr class="cr" onclick="op('robata')"><td class="hl">Robata no Ito Okashi <span class="oi">›</span></td><td class="note">Charcoal robatayaki. Thick salmon, eel. 22 seats only.</td><td><span class="badge bg">Tabelog 3.8+</span></td><td class="price">SGD ~35–64</td><td style="color:var(--forest);font-weight:600">✓ MUST-GO</td></tr>
+<tr class="cr" onclick="op('mentaiju')"><td class="hl">Ganso Hakata Mentaiju <span class="oi">›</span></td><td class="note">Original mentaiko rice bowl. Opens 7am.</td><td><span class="badge bg">Tabelog 3.7</span></td><td class="price">SGD ~32–50</td><td style="color:var(--forest);font-weight:600">✓ RECOMMENDED</td></tr>
+<tr class="cr" onclick="op('unagi')"><td class="hl">Yoshizuka Unagiya <span class="oi">›</span></td><td class="note">Legendary eel since 1873. Adjacent to hotel.</td><td><span class="badge bg">TripAdvisor 4.4/5</span></td><td class="price">SGD ~45–65</td><td style="color:var(--forest);font-weight:600">✓ RECOMMENDED</td></tr>
+<tr class="cr" onclick="op('hyotan')"><td class="hl">Hyotan Sushi <span class="oi">›</span></td><td class="note">Fukuoka's most iconic sushi. Live abalone.</td><td><span class="badge bg">Google 4.4/5</span></td><td class="price">SGD ~50–90</td><td style="color:var(--forest);font-weight:600">✓ HIGHLY REC.</td></tr>
+<tr class="cr" onclick="op('tempura')"><td class="hl">Tempura Hirao <span class="oi">›</span></td><td class="note">1979 legendary tempura. Set ¥770 — amazing value.</td><td><span class="badge bg">TripAdvisor 4.4/5</span></td><td class="price">SGD ~13–20</td><td style="color:var(--forest);font-weight:600">✓ EXCELLENT VALUE</td></tr>
+<tr class="cr" onclick="op('yatai')"><td class="hl">Yatai Stalls — Nakasu &amp; Tenjin <span class="oi">›</span></td><td class="note">Street food icon. Ramen, gyoza, yakitori. 6pm–2am.</td><td><span class="badge bg">★★★★★ Icon</span></td><td class="price">SGD ~35–55</td><td style="color:var(--forest);font-weight:600">✓ ESSENTIAL</td></tr>
+<tr class="cr" onclick="op('issou')"><td class="hl">Hakata Issou <span class="oi">›</span></td><td class="note">Top-100 Tabelog tonkotsu ramen, 5 consecutive years.</td><td><span class="badge bg">Tabelog 3.9/5</span></td><td class="price">SGD ~12–16</td><td style="color:var(--forest);font-weight:600">✓ HIGHLY REC.</td></tr>
+<tr class="cr" onclick="op('ikkousha')"><td class="hl">Ikkousha Ramen <span class="oi">›</span></td><td class="note">Solid tonkotsu chain. Good late-night backup.</td><td><span class="badge ba">TripAdvisor 4.0/5</span></td><td class="price">SGD ~12–18</td><td style="color:#8a4a00;font-weight:600">⚠ OPTIONAL</td></tr>
+<tr class="cr" onclick="op('hamatake')"><td class="hl">Uogashi Hamatake <span class="oi">›</span></td><td class="note">Market-style fresh seafood. Pick your fish.</td><td><span class="badge ba">Google 4.2/5</span></td><td class="price">SGD ~40–70</td><td style="color:#8a4a00;font-weight:600">⚠ OPTIONAL</td></tr>
+</tbody></table>
+</div>
+
+<!-- MAP -->
+<div class="sec" id="mapSec">
+<div class="sec-title">🗺 Interactive Route Map</div>
+<p class="sec-sub">Click any marker for details. Click any itinerary row below to highlight that location on the map. Green dashes = Fukuoka day trips · Red line = car rental loop (Days 5–8) · Gold = city base · Teal = overnight ryokans.</p>
+<div class="mleg">
+<div class="mleg-i"><div class="mleg-d" style="background:#b07d2a"></div>Fukuoka city base (Days 1–4, 8–12)</div>
+<div class="mleg-i"><div class="mleg-d" style="background:#254d38"></div>Day trips from Fukuoka</div>
+<div class="mleg-i"><div class="mleg-d" style="background:#a83820"></div>Car rental loop (Days 5–8)</div>
+<div class="mleg-i"><div class="mleg-d" style="background:#3a6b7a"></div>Overnight ryokan stops</div>
+</div>
+<div id="trip-map"></div>
+</div>
+
+<!-- ITINERARY -->
+<div class="sec" id="itin">
+<div class="sec-title">📅 Day-by-Day Itinerary</div>
+<p class="sec-sub">Click any row to open a photo panel AND highlight the location on the map above. Green = meals · Yellow = optional · Purple = driving.</p>
+
+<div class="day-block">
+<div class="day-hdr"><div class="day-num"><span class="d">01</span><span class="lw">SAT 29 AUG</span></div>
+<div class="day-tw"><div class="day-ttl">Arrival — Seaside Park, Fukuoka Tower &amp; Nakasu Yatai</div><div class="day-ds">Arrive ~8am via SQ656 · Base: Royal Park Canvas Nakasu</div></div></div>
+<table class="dtbl"><thead><tr><th>Time</th><th>Activity</th><th>Type</th><th>Cost (2 pax)</th></tr></thead><tbody>
+<tr class="cr mr" onclick="openAndFly('mentaiju',[33.5904,130.3950])"><td class="tc">8:00 AM</td><td><span class="spot">🍽 Breakfast — Ganso Hakata Mentaiju ›</span><span class="desc">Original mentaiko rice bowl. 5 min walk from hotel. Opens 7am.</span></td><td>Breakfast</td><td class="cc">SGD ~32–40</td></tr>
+<tr class="cr" onclick="openAndFly('canvas',[33.5904,130.4017])"><td class="tc">9:30 AM</td><td><span class="spot">🏨 Check-in — Royal Park Canvas ›</span><span class="desc">Request river-view balcony room (10F–14F).</span></td><td>Hotel</td><td class="cc">—</td></tr>
+<tr class="cr" onclick="openAndFly('uminonakamichi',[33.6440,130.4284])"><td class="tc">10:30 AM</td><td><span class="spot">🌊 Uminonakamichi Seaside Park ›</span><span class="desc">Sunflower fields in Aug, 3km coastal walk, bike rental. ¥450/pax.</span></td><td>Nature</td><td class="cc">SGD ~14</td></tr>
+<tr class="cr" onclick="openAndFly('fukuokatower',[33.5893,130.3613])"><td class="tc">2:00 PM</td><td><span class="spot">🗼 Fukuoka Tower + Momochihama Beach ›</span><span class="desc">Japan's highest seaside tower (234m). Bay views.</span></td><td>Views</td><td class="cc">SGD ~13</td></tr>
+<tr class="cr mr" onclick="openAndFly('unagi',[33.5910,130.4050])"><td class="tc">4:00 PM</td><td><span class="spot">🍽 Lunch — Yoshizuka Unagiya ›</span><span class="desc">Adjacent to hotel. 150+ year-old legendary eel specialist.</span></td><td>Lunch</td><td class="cc">SGD ~45–65</td></tr>
+<tr class="cr mr" onclick="openAndFly('yatai',[33.5920,130.4020])"><td class="tc">7:00 PM</td><td><span class="spot">🍽 Dinner — Nakasu Yatai Stalls ›</span><span class="desc">3 min walk from hotel. Quintessential Fukuoka. Cash only.</span></td><td>Dinner</td><td class="cc">SGD ~48–65</td></tr>
+</tbody></table></div>
+
+<div class="day-block">
+<div class="day-hdr"><div class="day-num"><span class="d">02</span><span class="lw">SUN 30 AUG</span></div>
+<div class="day-tw"><div class="day-ttl">Robata Breakfast — Itoshima Coast, SUP &amp; Seafood</div><div class="day-ds">Book Robata 1 month ahead · JR Chikuhi Line day trip</div></div></div>
+<table class="dtbl"><thead><tr><th>Time</th><th>Activity</th><th>Type</th><th>Cost (2 pax)</th></tr></thead><tbody>
+<tr class="cr mr" onclick="openAndFly('robata',[33.5820,130.3810])"><td class="tc">8:00 AM</td><td><span class="spot">🔥 Breakfast — Robata no Ito Okashi (BOOK 1 MONTH AHEAD) ›</span><span class="desc">Charcoal-grilled thick salmon &amp; eel. 22 counter seats only.</span></td><td>Breakfast</td><td class="cc">SGD ~35–64</td></tr>
+<tr class="cr" onclick="openAndFly('itoshima',[33.5564,130.2086])"><td class="tc">10:30 AM</td><td><span class="spot">🏝 Itoshima — Sakurai Sea Torii + Meoto Iwa ›</span><span class="desc">Red torii gate rising from the sea. Wild coastal scenery.</span></td><td>Scenery</td><td class="cc">Free</td></tr>
+<tr class="cr or" onclick="openAndFly('sup',[33.5564,130.2086])"><td class="tc">11:30 AM</td><td><span class="spot">🏄 OPTIONAL: SUP Paddleboarding — Itoshima Bay ›</span><span class="desc">Flat-water rental ¥3,500/2hrs. Coastal backdrop.</span></td><td>Optional</td><td class="cc">SGD ~56</td></tr>
+<tr class="cr mr" onclick="openAndFly('itoshimafish',[33.5564,130.2086])"><td class="tc">1:00 PM</td><td><span class="spot">🍽 Lunch — Itoshima Fish Market Grill ›</span><span class="desc">Pick fresh Genkai Sea catch, grilled on-site.</span></td><td>Lunch</td><td class="cc">SGD ~25–32</td></tr>
+<tr class="cr mr" onclick="openAndFly('motsu',[33.5904,130.4017])"><td class="tc">7:00 PM</td><td><span class="spot">🍽 Dinner — Hakata Motsu Nabe Yamanaka ›</span><span class="desc">Fukuoka's signature offal hot pot. Near hotel.</span></td><td>Dinner</td><td class="cc">SGD ~40–56</td></tr>
+</tbody></table></div>
+
+<div class="day-block">
+<div class="day-hdr"><div class="day-num"><span class="d">03</span><span class="lw">MON 1 SEP</span></div>
+<div class="day-tw"><div class="day-ttl">Yanagawa Canal · Ohori Park · Hyotan Sushi · Optional Bay Cruise</div></div></div>
+<table class="dtbl"><thead><tr><th>Time</th><th>Activity</th><th>Type</th><th>Cost (2 pax)</th></tr></thead><tbody>
+<tr class="cr" onclick="openAndFly('yanagawa',[33.2079,130.5580])"><td class="tc">10:15 AM</td><td><span class="spot">🛶 Yanagawa Canal Boat Cruise ›</span><span class="desc">70-min flat-bottomed boat, boatman sings folk songs. ¥1,800/pax.</span></td><td>Scenic</td><td class="cc">SGD ~29</td></tr>
+<tr class="cr mr" onclick="openAndFly('yanagawaeel',[33.2079,130.5580])"><td class="tc">12:30 PM</td><td><span class="spot">🍽 Lunch — Seiro Mushi Steamed Eel, Yanagawa ›</span><span class="desc">Yanagawa's signature eel steamed in a wood box.</span></td><td>Lunch</td><td class="cc">SGD ~40–50</td></tr>
+<tr class="cr" onclick="openAndFly('ohori',[33.5850,130.3760])"><td class="tc">4:00 PM</td><td><span class="spot">🌿 Ohori Park + Fukuoka Castle Ruins ›</span><span class="desc">Urban lake park, 2km circuit walk, castle ruins.</span></td><td>Nature</td><td class="cc">Free</td></tr>
+<tr class="cr mr" onclick="openAndFly('hyotan',[33.5904,130.4017])"><td class="tc">6:30 PM</td><td><span class="spot">🍽 Dinner — Hyotan Sushi, Tenjin ›</span><span class="desc">Fukuoka's most iconic sushi. Go 6:30pm to beat queues.</span></td><td>Dinner</td><td class="cc">SGD ~50–80</td></tr>
+<tr class="cr or" onclick="openAndFly('baycruise',[33.5904,130.4017])"><td class="tc">8:30 PM</td><td><span class="spot">🚢 OPTIONAL: Hakata Bay Cruise ›</span><span class="desc">45-min evening cruise. Very romantic. ¥1,200/pax.</span></td><td>Optional</td><td class="cc">SGD ~20</td></tr>
+</tbody></table></div>
+
+<div class="day-block">
+<div class="day-hdr"><div class="day-num"><span class="d">04</span><span class="lw">TUE 2 SEP</span></div>
+<div class="day-tw"><div class="day-ttl">Nagasaki Day Trip → Pick Up Rental Car + Tempura Dinner</div><div class="day-ds">Morning Shinkansen · Afternoon collect car · IDP required</div></div></div>
+<table class="dtbl"><thead><tr><th>Time</th><th>Activity</th><th>Type</th><th>Cost (2 pax)</th></tr></thead><tbody>
+<tr class="cr" onclick="openAndFly('nagasaki',[32.7502,129.8779])"><td class="tc">9:30 AM</td><td><span class="spot">🌿 Glover Garden — Clifftop Estate &amp; Harbour Views ›</span><span class="desc">Preserved hilltop gardens, sweeping Nagasaki harbour panorama.</span></td><td>Scenery</td><td class="cc">SGD ~11</td></tr>
+<tr class="cr" onclick="openAndFly('inasayama',[32.7600,129.8700])"><td class="tc">11:00 AM</td><td><span class="spot">🚡 Inasayama Ropeway — One of Japan's Best City Views ›</span><span class="desc">360° panorama of Nagasaki harbour. ¥1,250/pax.</span></td><td>Views</td><td class="cc">SGD ~20</td></tr>
+<tr class="cr mr" onclick="openAndFly('champon',[32.7502,129.8779])"><td class="tc">1:00 PM</td><td><span class="spot">🍽 Lunch — Shikairou, Birthplace of Champon (1899) ›</span></td><td>Lunch</td><td class="cc">SGD ~19–29</td></tr>
+<tr class="cr dr" onclick="openAndFly('carrental',[33.5904,130.4017])"><td class="tc">5:30 PM</td><td><span class="spot">🚗 Pick Up Rental Car — Toyota Rent-A-Car ›</span><span class="desc">IDP + Singapore licence required. Request ETC card.</span></td><td>Car Rental</td><td class="cc">SGD ~65–97/day</td></tr>
+<tr class="cr mr" onclick="openAndFly('tempura',[33.5904,130.4017])"><td class="tc">7:30 PM</td><td><span class="spot">🍽 Dinner — Tempura Hirao Honten ›</span><span class="desc">1979 legendary tempura. Set ¥770. Outrageously good.</span></td><td>Dinner</td><td class="cc">SGD ~13–20</td></tr>
+</tbody></table></div>
+
+<div class="day-block">
+<div class="day-hdr"><div class="day-num"><span class="d">05</span><span class="lw">WED 3 SEP</span></div>
+<div class="day-tw"><div class="day-ttl">🚗 Drive: Mt. Aso Crater + Kusasenri → Kurokawa Onsen Ryokan</div><div class="day-ds">~2.5 hr drive · Full day in volcanic caldera · Night at private onsen ryokan</div></div></div>
+<table class="dtbl"><thead><tr><th>Time</th><th>Activity</th><th>Type</th><th>Cost (2 pax)</th></tr></thead><tbody>
+<tr class="cr dr"><td class="tc">7:30 AM</td><td><span class="spot">🚗 Drive: Fukuoka → Mt. Aso (~2.5 hrs)</span></td><td>Drive</td><td class="cc">SGD ~20</td></tr>
+<tr class="cr" onclick="openAndFly('aso',[32.8830,131.0860])"><td class="tc">10:00 AM</td><td><span class="spot">🌋 Mt. Aso Naka-dake Crater Walk ›</span><span class="desc">Active volcanic crater. Check JMA alert before visiting.</span></td><td>Nature</td><td class="cc">SGD ~5</td></tr>
+<tr class="cr" onclick="openAndFly('kusasenri',[32.8750,131.0650])"><td class="tc">11:30 AM</td><td><span class="spot">🐴 Kusasenri Grasslands + Horseback Riding ›</span><span class="desc">Japan's most dramatic open grassland. ¥800/pax horseback.</span></td><td>Nature</td><td class="cc">SGD ~13–16</td></tr>
+<tr class="cr mr" onclick="openAndFly('asobeef',[32.8830,131.0860])"><td class="tc">1:00 PM</td><td><span class="spot">🍽 Lunch — Aso Aka-ushi Red Cattle Beef ›</span></td><td>Lunch</td><td class="cc">SGD ~24–40</td></tr>
+<tr class="cr dr"><td class="tc">2:30 PM</td><td><span class="spot">🚗 Drive: Aso → Kurokawa Onsen (~1 hr)</span></td><td>Drive</td><td class="cc">SGD ~8</td></tr>
+<tr class="cr" onclick="openAndFly('kurokawa',[33.0227,131.0007])"><td class="tc">4:00 PM</td><td><span class="spot">♨ Kurokawa Village Walk + Nyuto 3-Bath Pass ›</span><span class="desc">300 bamboo lanterns at dusk. ¥1,600 tegata pass.</span></td><td>Onsen</td><td class="cc">SGD ~26</td></tr>
+<tr class="cr mr" onclick="openAndFly('kurokawa',[33.0227,131.0007])"><td class="tc">7:30 PM</td><td><span class="spot">🍽 Dinner — Kaiseki at Ryokan (included) ›</span></td><td>Dinner</td><td class="cc">Included</td></tr>
+</tbody></table></div>
+
+<div class="day-block">
+<div class="day-hdr"><div class="day-num"><span class="d">06</span><span class="lw">THU 4 SEP</span></div>
+<div class="day-tw"><div class="day-ttl">🚗 Takachiho Gorge — Volcanic Cliffs, Rowboat Under Waterfall &amp; Sacred Cave</div><div class="day-ds">⚠ BOOK BOAT EXACTLY 14 DAYS AHEAD at 9am JST · Drive to Yufuin overnight</div></div></div>
+<table class="dtbl"><thead><tr><th>Time</th><th>Activity</th><th>Type</th><th>Cost (2 pax)</th></tr></thead><tbody>
+<tr class="cr dr"><td class="tc">8:00 AM</td><td><span class="spot">🚗 Drive: Kurokawa → Takachiho Gorge (~2 hrs)</span></td><td>Drive</td><td class="cc">SGD ~12</td></tr>
+<tr class="cr" onclick="openAndFly('takachiho',[32.7068,131.2962])"><td class="tc">10:30 AM</td><td><span class="spot">🌊 Takachiho Gorge Walk — 80m Basalt Cliffs ›</span><span class="desc">Crystal turquoise river, Manai Waterfall views.</span></td><td>Nature</td><td class="cc">Free</td></tr>
+<tr class="cr" onclick="openAndFly('takachihboat',[32.7068,131.2962])"><td class="tc">11:00 AM</td><td><span class="spot">🚣 Takachiho Rowboat — UNDER the Waterfall ›</span><span class="desc">Row right up to Manai base. Book 14 days ahead 9am JST sharp.</span></td><td>Activity</td><td class="cc">SGD ~33–41</td></tr>
+<tr class="cr mr"><td class="tc">12:30 PM</td><td><span class="spot">🍽 Lunch — Local stalls (wagyu teishoku, soba)</span></td><td>Lunch</td><td class="cc">SGD ~16–24</td></tr>
+<tr class="cr" onclick="openAndFly('amano',[32.7280,131.3140])"><td class="tc">2:00 PM</td><td><span class="spot">🏔 Amano Yasugawara Shrine + Sacred Cave ›</span><span class="desc">Where Amaterasu hid. Thousands of stacked stone towers.</span></td><td>Scenic</td><td class="cc">Free</td></tr>
+<tr class="cr dr"><td class="tc">3:30 PM</td><td><span class="spot">🚗 Drive: Takachiho → Yufuin (~2.5 hrs)</span></td><td>Drive</td><td class="cc">SGD ~18</td></tr>
+<tr class="cr mr" onclick="openAndFly('yufuin',[33.2600,131.3690])"><td class="tc">7:30 PM</td><td><span class="spot">🍽 Dinner — Kaiseki at Yufuin Ryokan (included) ›</span></td><td>Dinner</td><td class="cc">Included</td></tr>
+</tbody></table></div>
+
+<div class="day-block">
+<div class="day-hdr"><div class="day-num"><span class="d">07</span><span class="lw">FRI 5 SEP</span></div>
+<div class="day-tw"><div class="day-ttl">Yufuin — Lake Kinrin Dawn Mist · Yunotsubo Street · Kokonoe Bridge</div></div></div>
+<table class="dtbl"><thead><tr><th>Time</th><th>Activity</th><th>Type</th><th>Cost (2 pax)</th></tr></thead><tbody>
+<tr class="cr" onclick="openAndFly('kinrin',[33.2553,131.3682])"><td class="tc">6:30 AM</td><td><span class="spot">🌊 Lake Kinrin — Dawn Mist Walk (before 8am) ›</span><span class="desc">Hot spring water creates magical morning mist.</span></td><td>Nature</td><td class="cc">Free</td></tr>
+<tr class="cr" onclick="openAndFly('yunotsubo',[33.2580,131.3660])"><td class="tc">9:30 AM</td><td><span class="spot">🛍 Yunotsubo Kaido Street Stroll ›</span><span class="desc">B-Speak roll cake, wagyu burgers, craft shops.</span></td><td>Explore</td><td class="cc">SGD ~15–25</td></tr>
+<tr class="cr dr"><td class="tc">11:30 AM</td><td><span class="spot">🚗 Drive: Yufuin → Kokonoe Bridge (~35 min)</span></td><td>Drive</td><td class="cc">SGD ~5</td></tr>
+<tr class="cr mr" onclick="openAndFly('kokonoe',[33.0470,131.1590])"><td class="tc">12:00 PM</td><td><span class="spot">🍽 Lunch — Kokonoe Wagyu Burger at Bridge Restaurant ›</span></td><td>Lunch</td><td class="cc">SGD ~18–24</td></tr>
+<tr class="cr" onclick="openAndFly('kokonoe',[33.0470,131.1590])"><td class="tc">1:30 PM</td><td><span class="spot">🌉 Kokonoe Yume Suspension Bridge ›</span><span class="desc">390m long, 173m above gorge. Japan's highest pedestrian bridge.</span></td><td>Scenic</td><td class="cc">SGD ~8</td></tr>
+<tr class="cr or" onclick="openAndFly('tadewara',[33.0970,131.2280])"><td class="tc">3:00 PM</td><td><span class="spot">🌿 OPTIONAL: Tadewara Wetlands, Kuju ›</span><span class="desc">Highland wetland 1,240m. No tourists. Otherworldly.</span></td><td>Optional</td><td class="cc">Free</td></tr>
+<tr class="cr mr" onclick="openAndFly('yufuin',[33.2600,131.3690])"><td class="tc">7:30 PM</td><td><span class="spot">🍽 Dinner — Ryokan Kaiseki, Night 2 (included) ›</span></td><td>Dinner</td><td class="cc">Included</td></tr>
+</tbody></table></div>
+
+<div class="day-block">
+<div class="day-hdr"><div class="day-num"><span class="d">08</span><span class="lw">SAT 6 SEP</span></div>
+<div class="day-tw"><div class="day-ttl">🚗 Beppu — Hell Springs + Ropeway → Return Fukuoka · Drop Car</div></div></div>
+<table class="dtbl"><thead><tr><th>Time</th><th>Activity</th><th>Type</th><th>Cost (2 pax)</th></tr></thead><tbody>
+<tr class="cr dr"><td class="tc">8:30 AM</td><td><span class="spot">🚗 Drive: Yufuin → Beppu (~45 min)</span></td><td>Drive</td><td class="cc">SGD ~6</td></tr>
+<tr class="cr" onclick="openAndFly('beppu',[33.2838,131.4913])"><td class="tc">9:30 AM</td><td><span class="spot">🔥 Umi Jigoku + Kamado Jigoku (Beppu's Best 2 Hells) ›</span><span class="desc">Cobalt-blue boiling pool + multi-coloured steam pools.</span></td><td>Nature</td><td class="cc">SGD ~13</td></tr>
+<tr class="cr" onclick="openAndFly('beppuropeway',[33.2970,131.4980])"><td class="tc">11:00 AM</td><td><span class="spot">🚡 Beppu Ropeway to Mt. Tsurumi (1,375m) ›</span><span class="desc">Panoramic views over Beppu Bay. ¥1,800/pax.</span></td><td>Views</td><td class="cc">SGD ~29</td></tr>
+<tr class="cr mr" onclick="openAndFly('jigokumushi',[33.2838,131.4913])"><td class="tc">12:30 PM</td><td><span class="spot">🍽 Lunch — Hell Steam Cooking (Jigoku-mushi) ›</span></td><td>Lunch</td><td class="cc">SGD ~16–20</td></tr>
+<tr class="cr or" onclick="openAndFly('sandbath',[33.2780,131.4990])"><td class="tc">2:00 PM</td><td><span class="spot">🏖 OPTIONAL: Takegawara Sand Bath ›</span><span class="desc">130-year-old bathhouse. Buried in volcanic sand 42°C.</span></td><td>Optional</td><td class="cc">SGD ~24</td></tr>
+<tr class="cr dr"><td class="tc">3:30 PM</td><td><span class="spot">🚗 Drive: Beppu → Fukuoka (return car, ~2 hrs)</span></td><td>Drive</td><td class="cc">SGD ~22</td></tr>
+<tr class="cr mr" onclick="openAndFly('issou',[33.5904,130.4017])"><td class="tc">7:30 PM</td><td><span class="spot">🍽 Dinner — Hakata Issou Ramen (Top-100 Tabelog) ›</span></td><td>Dinner</td><td class="cc">SGD ~15–19</td></tr>
+</tbody></table></div>
+
+<div class="day-block">
+<div class="day-hdr"><div class="day-num"><span class="d">09</span><span class="lw">SUN 7 SEP</span></div>
+<div class="day-tw"><div class="day-ttl">TeamLab Forest · Canal City · Tenjin Shopping · Yatai Night</div></div></div>
+<table class="dtbl"><thead><tr><th>Time</th><th>Activity</th><th>Type</th><th>Cost (2 pax)</th></tr></thead><tbody>
+<tr class="cr" onclick="openAndFly('teamlab',[33.5856,130.3600])"><td class="tc">10:00 AM</td><td><span class="spot">🎨 teamLab Forest Fukuoka ›</span><span class="desc">Immersive digital art. Hunt creatures, crystal fireworks. ¥3,200/pax.</span></td><td>Experience</td><td class="cc">SGD ~52</td></tr>
+<tr class="cr mr" onclick="openAndFly('gyoza',[33.5904,130.4017])"><td class="tc">1:00 PM</td><td><span class="spot">🍽 Lunch — Tetsunabe Gyoza ›</span><span class="desc">Tiny iron-pan crisped gyoza. Hakata specialty.</span></td><td>Lunch</td><td class="cc">SGD ~32</td></tr>
+<tr class="cr" onclick="openAndFly('canalcity',[33.5890,130.4120])"><td class="tc">2:30 PM</td><td><span class="spot">🛍 Canal City + Tenjin Underground ›</span><span class="desc">250+ shops. Free 8pm water + light show.</span></td><td>Shopping</td><td class="cc">Budget</td></tr>
+<tr class="cr mr" onclick="openAndFly('yatai',[33.5904,130.4017])"><td class="tc">9:00 PM</td><td><span class="spot">🍽 Dinner — Tenjin Yatai Strip ›</span><span class="desc">More local than Nakasu. Yaki ramen invented here 1968.</span></td><td>Dinner</td><td class="cc">SGD ~45–55</td></tr>
+</tbody></table></div>
+
+<div class="day-block">
+<div class="day-hdr"><div class="day-num"><span class="d">10</span><span class="lw">MON 8 SEP</span></div>
+<div class="day-tw"><div class="day-ttl">Minou Waterfall · Nanzoin Reclining Buddha · Optional Fruit Picking</div></div></div>
+<table class="dtbl"><thead><tr><th>Time</th><th>Activity</th><th>Type</th><th>Cost (2 pax)</th></tr></thead><tbody>
+<tr class="cr" onclick="openAndFly('minou',[33.7000,130.5000])"><td class="tc">9:00 AM</td><td><span class="spot">💧 Minou Waterfall &amp; Forest Trail ›</span><span class="desc">2km gorge trail to 33m waterfall in maple forest.</span></td><td>Nature</td><td class="cc">SGD ~12</td></tr>
+<tr class="cr or" onclick="openAndFly('fruitpicking',[33.7500,130.5800])"><td class="tc">11:30 AM</td><td><span class="spot">🍇 OPTIONAL: Fruit Picking — Okagaki/Munakata ›</span></td><td>Optional</td><td class="cc">SGD ~40–50</td></tr>
+<tr class="cr" onclick="openAndFly('nanzoin',[33.6100,130.5800])"><td class="tc">2:30 PM</td><td><span class="spot">🗿 Nanzoin — World's Largest Bronze Reclining Buddha ›</span></td><td>Attraction</td><td class="cc">SGD ~6</td></tr>
+<tr class="cr mr" onclick="openAndFly('fishman',[33.5904,130.4017])"><td class="tc">7:30 PM</td><td><span class="spot">🍽 Dinner — Hakata Robata Fishman Izakaya ›</span></td><td>Dinner</td><td class="cc">SGD ~40–56</td></tr>
+</tbody></table></div>
+
+<div class="day-block">
+<div class="day-hdr"><div class="day-num"><span class="d">11</span><span class="lw">TUE 9 SEP</span></div>
+<div class="day-tw"><div class="day-ttl">Final Ramen · Souvenirs · Farewell Dinner at Robata no Ito Okashi</div></div></div>
+<table class="dtbl"><thead><tr><th>Time</th><th>Activity</th><th>Type</th><th>Cost (2 pax)</th></tr></thead><tbody>
+<tr class="cr mr" onclick="openAndFly('genkiippai',[33.5904,130.4017])"><td class="tc">8:30 AM</td><td><span class="spot">🍽 Breakfast — Hakata Genki Ippai!! (Top-100 Ramen) ›</span></td><td>Breakfast</td><td class="cc">SGD ~15</td></tr>
+<tr class="cr mr" onclick="openAndFly('robata',[33.5820,130.3810])"><td class="tc">6:00 PM</td><td><span class="spot">🔥 Farewell Dinner — Robata no Ito Okashi (5pm–11pm) ›</span><span class="desc">Perfect farewell. Thick salmon, eel. ¥5,000–7,000/pax.</span></td><td>Dinner</td><td class="cc">SGD ~80–113</td></tr>
+</tbody></table></div>
+
+<div class="day-block">
+<div class="day-hdr"><div class="day-num"><span class="d">12</span><span class="lw">WED 10 SEP</span></div>
+<div class="day-tw"><div class="day-ttl">Departure — Fukuoka Airport → Singapore</div></div></div>
+<table class="dtbl"><thead><tr><th>Time</th><th>Activity</th><th>Type</th><th>Cost</th></tr></thead><tbody>
+<tr class="cr mr"><td class="tc">8:00 AM</td><td><span class="spot">🍽 Final Breakfast — Ganso Mentaiju (opens 7am)</span></td><td>Breakfast</td><td class="cc">SGD ~8–25</td></tr>
+<tr><td class="tc">9:30 AM</td><td><span class="spot">✈ Fukuoka Airport — 5 min subway ¥260/pax</span><span class="desc">Arrive 2+ hrs before departure. Duty-free: mentaiko, whisky, Royce chocolate.</span></td><td>Depart</td><td class="cc">SGD ~4</td></tr>
+</tbody></table></div>
+</div>
+
+<!-- BUDGET -->
+<div class="sec" id="budget">
+<div class="sec-title">💰 Budget — 12 Days, 2 Pax</div>
+<div class="cost-box"><h3>Complete Budget Breakdown</h3>
+<div class="cg">
+<div class="ci"><div class="cl">✈ Flights (return, 2 pax)</div><div class="cv">SGD 900–2,800</div><div class="cn">Scoot ~900–1,400 · SQ ~2,200–2,800</div></div>
+<div class="ci"><div class="cl">🏨 Royal Park Canvas (7 nts)</div><div class="cv">SGD 1,400–1,960</div><div class="cn">SGD 200–280/night</div></div>
+<div class="ci"><div class="cl">♨ Kurokawa Ryokan (1 nt)</div><div class="cv">SGD 400–730</div><div class="cn">Incl. kaiseki dinner + breakfast</div></div>
+<div class="ci"><div class="cl">♨ Yufuin Ryokan (2 nts)</div><div class="cv">SGD 760–1,280</div><div class="cn">Incl. dinner + breakfast ×2</div></div>
+<div class="ci"><div class="cl">🍽 Meals (non-ryokan)</div><div class="cv">SGD 700–1,000</div><div class="cn">~25 meals, avg SGD 28–40</div></div>
+<div class="ci"><div class="cl">🚗 Car + fuel + tolls (5d)</div><div class="cv">SGD 400–580</div><div class="cn">SGD 65–97/day + ~SGD 80 fuel</div></div>
+<div class="ci"><div class="cl">🚂 Public Transport</div><div class="cv">SGD 180–280</div><div class="cn">JR Pass + subway + shinkansen</div></div>
+<div class="ci"><div class="cl">🎟 Attractions</div><div class="cv">SGD 280–450</div><div class="cn">TeamLab, hells, bridge, boat</div></div>
+<div class="ci"><div class="cl">🛍 Shopping + Misc</div><div class="cv">SGD 300–600</div><div class="cn">Souvenirs, snacks, ATM reserve</div></div>
+</div>
+<div class="cgrand"><div class="gl">Estimated Total (2 Pax)</div>
+<div class="ga">SGD 5,320 – 9,680</div>
+<div class="gn">Per person: SGD 2,660–4,840 · Budget (Scoot): ~SGD 5,300–6,500 · Mid-range: ~SGD 7,000–8,200 · Premium (SQ + upgraded ryokan): ~SGD 8,500–9,700</div>
+</div></div>
+</div>
+
+<!-- TIPS -->
+<div class="sec" id="tips">
+<div class="sec-title">💡 Essential Tips</div>
+<div class="tips-grid">
+<div class="tip"><h4>📋 IDP for Car Rental</h4><p>Apply at Singapore AA before departure. Takes ~2 weeks. Required alongside Singapore licence for Japan car rental.</p></div>
+<div class="tip"><h4>🔥 Book Robata 1 Month Ahead</h4><p>22 seats only. Book via Instagram @robata.itookashi0411. Breakfast 8am–2pm weekdays. Dinner 5pm–11pm.</p></div>
+<div class="tip"><h4>🚣 Takachiho Boat — Set Alarm</h4><p>Opens exactly 9am JST, 14 days before visit. Weekends sell out in minutes. Official Takachiho Tourism website only.</p></div>
+<div class="tip"><h4>♨ Ryokan Rooms Sell Out Fast</h4><p>Book Kurokawa and Yufuin as soon as flights are confirmed. 4–5 months ahead minimum for Aug/Sep.</p></div>
+<div class="tip"><h4>🌋 Check Aso Crater Alert</h4><p>Check JMA volcano alert 1–2 days before Day 5. Crater closes at Level 2+.</p></div>
+<div class="tip"><h4>💴 Carry Cash</h4><p>Yatai, Tempura Hirao, Robata are cash-only. Withdraw ¥80,000–100,000 at 7-Eleven airport ATMs.</p></div>
+<div class="tip"><h4>🛣 ETC Card for Tolls</h4><p>Request ETC card at rental counter (~¥550/day). Handles all expressway tolls automatically.</p></div>
+<div class="tip"><h4>🚂 JR Kyushu Northern Pass</h4><p>3-Day Pass (¥4,000) covers Nagasaki Shinkansen, Beppu Sonic, Yufuin no Mori. Buy on Klook before.</p></div>
+</div>
+</div>
+
+</div>
+
+<footer><strong>Fukuoka &amp; Kyushu — 12-Day Itinerary</strong> · 2 Pax · Private Onsen Nights · Car Rental Loop · Aug 29 – Sep 10<br>All costs SGD · ¥124/SGD (May 2026) · Click any row or card for photos, reviews &amp; links</footer>
+
+<div class="overlay" id="overlay" onclick="cp()"></div>
+<div class="sidebar" id="sidebar">
+<button class="sb-hdr" onclick="cp()"><span class="sb-ttl-text" id="sb_ttl">Details</span><span>✕ Close</span></button>
+<div class="sb-body" id="sb_body"></div>
+</div>
+
+<script>
+// ── UTILITIES ──
+function s(id){const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'})}
+
+// ── MAP ──
+var leafMap=null,markerMap={},activeMarker=null;
+
+function initMap(){
+  if(leafMap)return;
+  try{
+    leafMap=L.map('trip-map',{zoomControl:true,scrollWheelZoom:false}).setView([33.0,131.0],7);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom:18
+    }).addTo(leafMap);
+
+    function mi(color,label){
+      return L.divIcon({className:'',
+        html:'<div style="background:'+color+';color:#fff;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);cursor:pointer;white-space:nowrap">'+label+'</div>',
+        iconSize:[30,30],iconAnchor:[15,15],popupAnchor:[0,-15]
+      });
+    }
+
+    var stops=[
+      {id:'hakata',ll:[33.5904,130.4017],lbl:'1-4\n8-12',col:'#b07d2a',title:'Fukuoka (Hakata)',desc:'Royal Park Canvas Nakasu · City base for Days 1–4 &amp; 8–12'},
+      {id:'itoshima',ll:[33.5564,130.2086],lbl:'D2',col:'#254d38',title:'Itoshima Peninsula',desc:'Sakurai Sea Torii, Meoto Iwa rocks, SUP, seaside cafes · Day 2'},
+      {id:'yanagawa',ll:[33.2079,130.5580],lbl:'D3',col:'#254d38',title:'Yanagawa',desc:'Canal boat cruise &amp; seiro-mushi steamed eel · Day 3'},
+      {id:'nagasaki',ll:[32.7502,129.8779],lbl:'D4',col:'#254d38',title:'Nagasaki',desc:'Glover Garden, Inasayama Ropeway, original champon · Day 4'},
+      {id:'aso',ll:[32.8830,131.0860],lbl:'D5',col:'#a83820',title:'Mt. Aso Caldera',desc:'Naka-dake crater walk &amp; Kusasenri grasslands · Day 5'},
+      {id:'kurokawa',ll:[33.0227,131.0007],lbl:'5★',col:'#3a6b7a',title:'Kurokawa Onsen Ryokan',desc:'Private open-air onsen · Bamboo lanterns · Kaiseki dinner · Day 5 overnight'},
+      {id:'takachiho',ll:[32.7068,131.2962],lbl:'D6',col:'#a83820',title:'Takachiho Gorge',desc:'Basalt cliffs, rowboat under waterfall, Amano Iwato sacred cave · Day 6'},
+      {id:'yufuin',ll:[33.2600,131.3690],lbl:'6-7★',col:'#3a6b7a',title:'Yufuin Onsen Ryokan',desc:'Private outdoor bath with Mt. Yufu view · Lake Kinrin mist · Days 6–7 overnight'},
+      {id:'kokonoe',ll:[33.0470,131.1590],lbl:'D7',col:'#a83820',title:'Kokonoe Yume Bridge',desc:"Japan's highest pedestrian bridge (173m) · Tadewara wetlands · Day 7"},
+      {id:'beppu',ll:[33.2838,131.4913],lbl:'D8',col:'#a83820',title:'Beppu',desc:'Umi Jigoku, Kamado Jigoku, Mt. Tsurumi ropeway, sand bath · Day 8'},
+    ];
+
+    stops.forEach(function(st){
+      var m=L.marker(st.ll,{icon:mi(st.col,st.lbl)}).addTo(leafMap);
+      m.bindPopup('<strong style="font-size:13px">'+st.title+'</strong><br><span style="font-size:11px;color:#5a4e3e">'+st.desc+'</span><br><button onclick="op(\''+st.id+'\')" style="margin-top:6px;padding:4px 10px;background:#b07d2a;color:#fff;border:none;border-radius:4px;font-size:11px;cursor:pointer">📖 Details &amp; Photos</button>',{maxWidth:280});
+      markerMap[st.id]=m;
+    });
+
+    // Draw routes
+    var dayTrips=[[33.5904,130.4017],[33.5564,130.2086],[33.5904,130.4017],[33.2079,130.5580],[33.5904,130.4017],[32.7502,129.8779],[33.5904,130.4017]];
+    L.polyline(dayTrips,{color:'#254d38',weight:2,dashArray:'6,6',opacity:.75}).addTo(leafMap);
+    var carLoop=[[33.5904,130.4017],[32.8830,131.0860],[33.0227,131.0007],[32.7068,131.2962],[33.2600,131.3690],[33.0470,131.1590],[33.2838,131.4913],[33.5904,130.4017]];
+    L.polyline(carLoop,{color:'#a83820',weight:3,opacity:.85}).addTo(leafMap);
+
+  }catch(e){console.warn('Map init error:',e)}
+}
+
+function flyTo(latLng,markerId){
+  if(!leafMap){initMap();}
+  setTimeout(function(){
+    if(leafMap&&latLng){
+      leafMap.flyTo(latLng,12,{animate:true,duration:1.2});
+      var keys=Object.keys(markerMap);
+      var bestKey=null;
+      // find closest marker
+      var best=9999;
+      keys.forEach(function(k){
+        var m=markerMap[k];
+        var ll=m.getLatLng();
+        var d=Math.abs(ll.lat-latLng[0])+Math.abs(ll.lng-latLng[1]);
+        if(d<best){best=d;bestKey=k;}
+      });
+      if(bestKey&&markerMap[bestKey]){
+        setTimeout(function(){markerMap[bestKey].openPopup();},1200);
+      }
+    }
+  },100);
+}
+
+// ── PANEL DATA (images from Wikimedia Commons & Unsplash) ──
+var imgs={
+  // Hotels
+  canvas:['https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=700&q=80','https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&q=80','https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&q=80'],
+  kurokawa:['https://images.unsplash.com/photo-1540541338537-1220205ac580?w=700&q=80','https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=400&q=80','https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=400&q=80'],
+  yufuin:['https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=700&q=80','https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=400&q=80','https://images.unsplash.com/photo-1574019069304-f7f9b7da3f65?w=400&q=80'],
+  // Attractions
+  takachiho:['https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Takachiho_Gorge_Boat_Ride.jpg/800px-Takachiho_Gorge_Boat_Ride.jpg','https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Takachiho-kyo_gorge.jpg/800px-Takachiho-kyo_gorge.jpg','https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=400&q=80'],
+  takachihboat:['https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Takachiho_Gorge_Boat_Ride.jpg/800px-Takachiho_Gorge_Boat_Ride.jpg','https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Takachiho-kyo_gorge.jpg/800px-Takachiho-kyo_gorge.jpg'],
+  aso:['https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Mount_Aso_from_Daikanbo.jpg/800px-Mount_Aso_from_Daikanbo.jpg','https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Kusasenrigahama_Aso.jpg/800px-Kusasenrigahama_Aso.jpg','https://images.unsplash.com/photo-1559329007-40df8a9345d8?w=400&q=80'],
+  kusasenri:['https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Kusasenrigahama_Aso.jpg/800px-Kusasenrigahama_Aso.jpg','https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Mount_Aso_from_Daikanbo.jpg/800px-Mount_Aso_from_Daikanbo.jpg'],
+  kinrin:['https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Kinrinko_Lake_Yufuin.jpg/800px-Kinrinko_Lake_Yufuin.jpg','https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400&q=80','https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=400&q=80'],
+  kokonoe:['https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Kokonoe_Dream_Bridge.jpg/800px-Kokonoe_Dream_Bridge.jpg','https://images.unsplash.com/photo-1526481280693-3bfa7568e0f3?w=400&q=80'],
+  beppu:['https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Umi_jigoku.jpg/800px-Umi_jigoku.jpg','https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Kamado_jigoku_beppu.jpg/800px-Kamado_jigoku_beppu.jpg','https://images.unsplash.com/photo-1609175932629-8a3ff4b2a7b0?w=400&q=80'],
+  nagasaki:['https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Glover_Garden_Nagasaki.jpg/800px-Glover_Garden_Nagasaki.jpg','https://images.unsplash.com/photo-1578469645742-46cae010e5d4?w=400&q=80','https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=400&q=80'],
+  itoshima:['https://images.unsplash.com/photo-1478436127897-769e1b3f0f36?w=700&q=80','https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&q=80'],
+  yanagawa:['https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=700&q=80','https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80'],
+  ohori:['https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=700&q=80','https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400&q=80'],
+  minou:['https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?w=700&q=80','https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400&q=80'],
+  nanzoin:['https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Nanzoin_Temple_reclining_Buddha.jpg/800px-Nanzoin_Temple_reclining_Buddha.jpg','https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=400&q=80'],
+  uminonakamichi:['https://images.unsplash.com/photo-1523217582562-09d0def993a6?w=700&q=80','https://images.unsplash.com/photo-1416339306562-f3d12fefd36f?w=400&q=80'],
+  fukuokatower:['https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Fukuoka_Tower_from_the_sea.jpg/600px-Fukuoka_Tower_from_the_sea.jpg','https://images.unsplash.com/photo-1492571350019-22de08371fd3?w=400&q=80'],
+  amano:['https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=700&q=80','https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400&q=80'],
+  teamlab:['https://images.unsplash.com/photo-1518998053901-5348d3961a04?w=700&q=80','https://images.unsplash.com/photo-1558618047-f50fa2b23686?w=400&q=80'],
+  tadewara:['https://images.unsplash.com/photo-1418065460487-3e41a6c84dc5?w=700&q=80','https://images.unsplash.com/photo-1536240478700-b869ad10a2eb?w=400&q=80'],
+  // Restaurants
+  robata:['https://images.unsplash.com/photo-1559339352-11d035aa65de?w=700&q=80','https://images.unsplash.com/photo-1580822184713-fc5400e7fe10?w=400&q=80','https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'],
+  mentaiju:['https://images.unsplash.com/photo-1547592180-85f173990554?w=700&q=80','https://images.unsplash.com/photo-1569775545497-e4ffe7e5c62d?w=400&q=80'],
+  unagi:['https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=700&q=80','https://images.unsplash.com/photo-1611143669185-af224c5e3252?w=400&q=80'],
+  hyotan:['https://images.unsplash.com/photo-1553621042-f6e147245754?w=700&q=80','https://images.unsplash.com/photo-1559410545-0bdcd187e0a6?w=400&q=80','https://images.unsplash.com/photo-1617196034183-421b4040ed20?w=400&q=80'],
+  tempura:['https://images.unsplash.com/photo-1618219908412-a29a1bb7b86e?w=700&q=80','https://images.unsplash.com/photo-1583623025817-d180a2221d0a?w=400&q=80'],
+  yatai:['https://images.unsplash.com/photo-1583224964978-2257b8a0cb96?w=700&q=80','https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=400&q=80','https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80'],
+  issou:['https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=700&q=80','https://images.unsplash.com/photo-1574484284002-952d92456975?w=400&q=80'],
+  champon:['https://images.unsplash.com/photo-1547592180-85f173990554?w=700&q=80','https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400&q=80'],
+  motsu:['https://images.unsplash.com/photo-1547592180-85f173990554?w=700&q=80','https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80'],
+  yanagawaeel:['https://images.unsplash.com/photo-1611143669185-af224c5e3252?w=700&q=80','https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=400&q=80'],
+  asobeef:['https://images.unsplash.com/photo-1558030006-450675393462?w=700&q=80','https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'],
+  jigokumushi:['https://images.unsplash.com/photo-1547592180-85f173990554?w=700&q=80','https://images.unsplash.com/photo-1580822184713-fc5400e7fe10?w=400&q=80'],
+  genkiippai:['https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=700&q=80','https://images.unsplash.com/photo-1574484284002-952d92456975?w=400&q=80'],
+  gyoza:['https://images.unsplash.com/photo-1563245372-f21724e3856d?w=700&q=80','https://images.unsplash.com/photo-1609167830220-7164aa360951?w=400&q=80'],
+  fishman:['https://images.unsplash.com/photo-1559339352-11d035aa65de?w=700&q=80','https://images.unsplash.com/photo-1580822184713-fc5400e7fe10?w=400&q=80'],
+};
+
+function buildPhotos(id){
+  var list=imgs[id]||[];
+  if(!list.length)return'';
+  var html='<div class="sb-photos">';
+  list.forEach(function(src,i){
+    html+='<img src="'+src+'" class="'+(i===0?'wide':'')+'" alt="" onerror="this.style.display=\'none\'" loading="lazy">';
+  });
+  html+='</div><p class="photo-credit">📸 Photos: Wikimedia Commons / Unsplash (illustrative)</p>';
+  return html;
+}
+
+// ── PANEL CONTENT ──
+var panels={
+sq:{t:'Singapore Airlines SQ656',s:'Direct · SIN→FUK · ~6 hrs · Daily from Changi T2',c:'<div class="sbsec"><h4>About</h4><p>Daily non-stop SIN→FUK. Full-service with meals, entertainment and 23kg checked baggage included. Best reliability and comfort of all options. KrisFlyer miles can be used for upgrades.</p></div><div class="sbsec"><h4>Estimated Fares (Late Aug / Early Sep)</h4><div class="pc"><div class="pb"><div class="ps">Economy / pax</div><div class="pa">SGD 1,100–1,400</div><div class="pn">Return</div></div><div class="pb"><div class="ps">Business / pax</div><div class="pa">SGD 4,500–7,000</div><div class="pn">Return</div></div><div class="pb"><div class="ps">2 Pax Total</div><div class="pa">SGD 2,200–2,800</div><div class="pn">Economy both</div></div></div></div><div class="sbsec"><h4>Book Here</h4><div class="lnks"><a class="lnk lp" href="https://www.singaporeair.com" target="_blank">Singapore Airlines</a><a class="lnk ls" href="https://www.skyscanner.com.sg" target="_blank">Skyscanner</a><a class="lnk ls" href="https://www.google.com/travel/flights" target="_blank">Google Flights</a></div></div><div class="sb-tip">💡 Book by end of June for late Aug/Sep fares. Prices spike 4–6 weeks before departure.</div>'},
+scoot:{t:'Scoot (TR) Direct Flight',s:'Budget Direct · SIN→FUK · ~6 hrs',c:'<div class="sbsec"><h4>About</h4><p>SIA\'s low-cost subsidiary. Direct SIN–FUK. Baggage add-on ~SGD 60–90 for 20kg each way. No meals included but can be purchased. Best value if booked 3–4 months early.</p></div><div class="sbsec"><h4>Estimated Fares</h4><div class="pc"><div class="pb"><div class="ps">Bare fare / pax</div><div class="pa">SGD 450–700</div><div class="pn">No bags</div></div><div class="pb"><div class="ps">With 20kg bag</div><div class="pa">SGD 550–800</div><div class="pn">Per pax</div></div><div class="pb"><div class="ps">2 Pax Total</div><div class="pa">SGD 1,100–1,600</div><div class="pn">With baggage</div></div></div></div><div class="sbsec"><h4>Book</h4><div class="lnks"><a class="lnk lp" href="https://www.flyscoot.com" target="_blank">Scoot Official</a><a class="lnk ls" href="https://www.skyscanner.com.sg" target="_blank">Skyscanner</a></div></div><div class="sb-tip">💡 Savings vs SQ of SGD 600–1,200 for 2 pax. Use savings for an upgraded ryokan night!</div>'},
+peach:{t:'Peach Aviation',s:'Japanese LCC · Direct · SIN→FUK',c:'<div class="sbsec"><h4>About</h4><p>ANA Group\'s low-cost carrier. Direct SIN–FUK. Very bare-bones — no seat selection, meals, or baggage without add-ons. Lowest absolute fares if you travel light.</p></div><div class="sbsec"><h4>Fares</h4><div class="pc"><div class="pb"><div class="ps">Base / pax</div><div class="pa">SGD 400–650</div><div class="pn">No frills</div></div><div class="pb"><div class="ps">2 Pax Total</div><div class="pa">SGD 800–1,300</div><div class="pn">Without bags</div></div></div></div><div class="sbsec"><h4>Book</h4><div class="lnks"><a class="lnk lp" href="https://www.flypeach.com" target="_blank">Peach Official</a><a class="lnk ls" href="https://www.skyscanner.com.sg" target="_blank">Skyscanner</a></div></div>'},
+
+canvas:{t:'The Royal Park Canvas Fukuoka Nakasu',s:'★★★★ · Nakasu, Hakata · Days 1–4 & 8–12 (7 nights)',c:'<div class="sbsec"><h4>Why This Hotel</h4><p>On the Hakata River in Nakasu — 3 min walk to Nakasukawabata Station (5 min subway to airport). Steps to Nakasu yatai stalls. Walking distance to Canal City. Large public bath + sauna with no tattoo restrictions — rare and excellent for travellers.</p></div><div class="sbsec"><h4>Highlights</h4><p>• Large public bath + sauna evoking Kyushu valleys<br>• ONO HAKATA restaurant — wood-fired Kyushu cuisine + buffet breakfast<br>• Balcony river-view rooms on sky floors (10F–14F)<br>• JBL Bluetooth speakers, Netflix TV<br>• Free drinks and snacks during stay<br>• DJ nights Fri/Sat at rooftop garden</p></div><div class="sbsec"><h4>Guest Reviews</h4><div class="sb-revs"><div class="sb-rev"><div class="rs">★★★★★</div><div class="rb">Booking.com · 9.2/10 · Couples</div><div class="rt">"Location is incredible — corner room with excellent view over the river. No tattoo policy for bath is great for travellers. Bed was so comfortable. Staff were very helpful."</div></div><div class="sb-rev"><div class="rs">★★★★★</div><div class="rb">Trip.com · Verified stay 2024</div><div class="rt">"Breakfast provides ample choices of à la carte plus buffet. Grand bath a bit small at peak times but steam sauna is refreshing. Very good location."</div></div><div class="sb-rev"><div class="rs">★★★★</div><div class="rb">TripAdvisor · Verified</div><div class="rt">"Lovely rooms, generous breakfast, attentive service. Public bath never overcrowded during off-peak hours. Would stay again."</div></div></div></div><div class="sbsec"><h4>Price Comparison — Per Night (Aug/Sep)</h4><div class="pc"><div class="pb"><div class="ps">Booking.com</div><div class="pa">SGD 200–280</div><div class="pn">Genius discount avail.</div></div><div class="pb"><div class="ps">Expedia</div><div class="pa">SGD 210–290</div><div class="pn">Per night</div></div><div class="pb"><div class="ps">Klook</div><div class="pa">SGD 195–275</div><div class="pn">Often cheapest</div></div><div class="pb"><div class="ps">7 Nights Total</div><div class="pa">SGD 1,365–1,960</div><div class="pn">Best: book early</div></div></div></div><div class="sbsec"><h4>Book</h4><div class="lnks"><a class="lnk lb" href="https://www.booking.com/hotel/jp/the-royal-park-canvas-fukuoka-nakasu.html" target="_blank">Booking.com</a><a class="lnk lk" href="https://www.klook.com/hotels/detail/1123529-the-royal-park-canvas-fukuoka-nakasu/" target="_blank">Klook</a><a class="lnk lt" href="https://www.tripadvisor.com/Hotel_Review-g14135118-d26559550-Reviews-The_Royal_Park_Canvas_Fukuoka_Nakasu.html" target="_blank">TripAdvisor</a><a class="lnk lgm" href="https://maps.google.com/?q=The+Royal+Park+Canvas+Fukuoka+Nakasu" target="_blank">📍 Maps</a></div></div><div class="sb-tip">💡 Request river-view balcony room on sky floor (10F–14F). Booking.com Genius discount saves 10–15%. Book 6+ months ahead for Aug/Sep.</div>'},
+
+kurokawa:{t:'Kurokawa Onsen Ryokan',s:'★★★★★ · Kurokawa Village, Kumamoto · Day 5 · Private Open-Air Onsen',c:'<div class="sbsec"><h4>About Kurokawa Village</h4><p>One of Japan\'s most beloved onsen villages in a forested mountain valley. 24+ ryokans line the Tanoharu River connected by stone lantern-lit paths. Famous for 300 bamboo lanterns at dusk and the nyuto tegata 3-bath wooden pass. 2.5 hrs from Fukuoka by rental car.</p></div><div class="sbsec"><h4>Recommended Ryokans</h4><p><b>Gekkoju (月光荘):</b> All suites, private open-air baths, mountain forest views. Most romantic option.<br><br><b>Oku no Yu (奥の湯):</b> Riverside, private forest baths, slightly more affordable. Also excellent.</p></div><div class="sbsec"><h4>Guest Reviews</h4><div class="sb-revs"><div class="sb-rev"><div class="rs">★★★★★</div><div class="rb">Booking.com · 9.4/10</div><div class="rt">"The private bath opens onto the forest and river sounds. Incredible kaiseki dinner served in our room. Truly one of the best nights of my life."</div></div><div class="sb-rev"><div class="rs">★★★★★</div><div class="rb">TripAdvisor · Couples</div><div class="rt">"The lantern-lit riverside walk at night is pure magic. The private rotenburo was extraordinary. Kaiseki dinner was outstanding."</div></div></div></div><div class="sbsec"><h4>Price — 1 Night (Incl. Dinner + Breakfast for 2)</h4><div class="pc"><div class="pb"><div class="ps">Entry Ryokan</div><div class="pa">SGD 400</div><div class="pn">2 meals</div></div><div class="pb"><div class="ps">Mid Ryokan</div><div class="pa">SGD 560</div><div class="pn">2 meals</div></div><div class="pb"><div class="ps">Premium Suite</div><div class="pa">SGD 730</div><div class="pn">Gekkoju, 2 meals</div></div></div></div><div class="sbsec"><h4>Book</h4><div class="lnks"><a class="lnk lb" href="https://www.booking.com/searchresults.html?ss=Kurokawa+Onsen" target="_blank">Booking.com</a><a class="lnk ls" href="https://www.jalan.net/en/japan_hotels/area/area_nar0900020/" target="_blank">Jalan</a><a class="lnk ls" href="https://en.ikyu.com/" target="_blank">Ikyu (premium)</a><a class="lnk lgm" href="https://maps.google.com/?q=Kurokawa+Onsen" target="_blank">📍 Maps</a></div></div><div class="sb-tip">💡 Book 4–5 months ahead for Aug/Sep. Private onsen rooms sell out first. Alternatives if full: Sanso Kawabo, Yamamizuki in the same village.</div>'},
+
+yufuin:{t:'Yufuin Onsen Ryokan',s:'★★★★★ · Yufuin, Oita · Days 6–7 (2 nights) · Private Outdoor Onsen + Mt. Yufu View',c:'<div class="sbsec"><h4>About Yufuin</h4><p>Yufuin sits in a valley with Mt. Yufu dominating the skyline. Famous for the misty Lake Kinrin, fairy-tale Yunotsubo Kaido street, and some of Japan\'s finest ryokans with private outdoor baths facing the mountain.</p></div><div class="sbsec"><h4>Recommended Ryokans</h4><p><b>Yufuin Gettouan (由布院月燈庵):</b> Private villa-style rooms with outdoor onsen baths facing Mt. Yufu. Most romantic in Yufuin.<br><br><b>Sanso Murata (山荘 無量塔):</b> Award-winning with exceptional kaiseki cuisine and private cypress baths.</p></div><div class="sbsec"><h4>Guest Reviews</h4><div class="sb-revs"><div class="sb-rev"><div class="rs">★★★★★</div><div class="rb">Google · 4.7/5</div><div class="rt">"Waking up and stepping into the outdoor private bath with Mt. Yufu right there was the single most beautiful morning of our Japan trip. Absolutely magical."</div></div><div class="sb-rev"><div class="rs">★★★★★</div><div class="rb">TripAdvisor</div><div class="rt">"The kaiseki dinner was one of the finest meals of our lives. Private bath at midnight under the stars with Mt. Yufu — a memory I\'ll keep forever."</div></div></div></div><div class="sbsec"><h4>Price — Per Night (Incl. Dinner + Breakfast for 2)</h4><div class="pc"><div class="pb"><div class="ps">Entry room</div><div class="pa">SGD 380</div><div class="pn">2 meals</div></div><div class="pb"><div class="ps">Garden room</div><div class="pa">SGD 500</div><div class="pn">2 meals</div></div><div class="pb"><div class="ps">Private villa</div><div class="pa">SGD 640</div><div class="pn">Gettouan</div></div><div class="pb"><div class="ps">2 Nights Total</div><div class="pa">SGD 760–1,280</div><div class="pn">Both nights, 2 pax</div></div></div></div><div class="sbsec"><h4>Book</h4><div class="lnks"><a class="lnk lb" href="https://www.booking.com/searchresults.html?ss=Yufuin+Onsen+Ryokan" target="_blank">Booking.com</a><a class="lnk ls" href="https://www.jalan.net/en/japan_hotels/area/area_nar0800070/" target="_blank">Jalan</a><a class="lnk ls" href="https://en.ikyu.com/" target="_blank">Ikyu</a><a class="lnk lgm" href="https://maps.google.com/?q=Yufuin+Onsen+Yufu+Oita" target="_blank">📍 Maps</a></div></div><div class="sb-tip">💡 Specifically request "Mt. Yufu view room" at Gettouan. Book 4–5 months ahead. The 2-night stay lets you do the Lake Kinrin dawn mist on Day 7 morning before check-out.</div>'},
+
+robata:{t:'Robata no Ito Okashi (炉端ノいとおかし)',s:'Charcoal Robatayaki · Ropponmatsu, Chuo-ku · RESERVATION REQUIRED',c:'<div class="sbsec"><h4>About</h4><p>22-counter-seat charcoal robatayaki run entirely by women. Extra-thick silver salmon, domestic eel, and seasonal Kyushu fish grilled live over charcoal right in front of you. The "healing atmosphere" is mentioned by almost every guest. Breakfast/lunch weekdays 8am–2pm. Dinner 5pm–11pm. Reservation via Instagram DM only — minimum 1 month ahead.</p></div><div class="sbsec"><h4>Signature Menu</h4><div class="menu-grid"><div class="menu-item"><div class="mi-name">Extra-Thick Silver Salmon (銀鮭)</div><div class="mi-desc">Charcoal-grilled, the signature must-order. Thick cut, smoky exterior, melting interior.</div><div class="mi-price">¥1,500–2,000</div></div><div class="menu-item"><div class="mi-name">Domestic Eel (国産鰻)</div><div class="mi-desc">Premium domestic unagi grilled over charcoal. Rarely seen quality at this price.</div><div class="mi-price">¥2,500–3,500</div></div><div class="menu-item"><div class="mi-name">Seasonal Fish Set (旬の魚)</div><div class="mi-desc">Chef\'s selection of seasonal Kyushu fish, grilled to order.</div><div class="mi-price">¥2,000–3,000</div></div><div class="menu-item"><div class="mi-name">Breakfast / Lunch Set</div><div class="mi-desc">Full set with rice, pickles, miso soup. Available 8am–2pm weekdays only.</div><div class="mi-price">¥2,200–4,000</div></div></div></div><div class="sbsec"><h4>Guest Reviews</h4><div class="sb-revs"><div class="sb-rev"><div class="rs">★★★★★</div><div class="rb">Trip.com / TikTok viral 2025–26</div><div class="rt">"The thick salmon is charcoal-grilled to perfection. Best breakfast in Fukuoka. The all-female staff create a warm, healing atmosphere unlike any restaurant I\'ve visited."</div></div><div class="sb-rev"><div class="rs">★★★★★</div><div class="rb">Tabelog 3.8+ / Verified guest</div><div class="rt">"You feel like you\'re eating at home with someone who truly cares about every ingredient. Quality of fish is extraordinary."</div></div></div></div><div class="sbsec"><h4>Practical Info</h4><p>📍 Ropponmatsu area, Chuo-ku · 15 min subway from Royal Park Canvas<br>🕐 Breakfast/lunch: 8am–2pm (weekdays) · Dinner: 5pm–11pm<br>📸 Reservation via Instagram DM: @robata.itookashi0411<br>💴 ¥2,200–4,000/pax (breakfast) · ¥5,000–7,000/pax (dinner)</p></div><div class="sbsec"><h4>Book</h4><div class="lnks"><a class="lnk lp" href="https://www.instagram.com/robata.itookashi0411/" target="_blank">📸 Book via Instagram</a><a class="lnk ltb" href="https://tabelog.com/en/fukuoka/A4001/A400103/40057498/" target="_blank">Tabelog</a><a class="lnk lgm" href="https://maps.google.com/?q=Robata+Itookashi+Fukuoka" target="_blank">📍 Maps</a></div></div><div class="sb-tip">💡 Book via Instagram DM at least 1 month ahead. Owner reads all DMs personally. Specify date, time (breakfast or dinner), party size. If full, ask to be waitlisted.</div>'},
+
+mentaiju:{t:'Ganso Hakata Mentaiju (元祖博多めんたい重)',s:'Original Mentaiko Rice Bowl · Nishinakasu · 5 min walk from hotel',c:'<div class="sbsec"><h4>About</h4><p>The originator of Fukuoka\'s mentaiko-on-rice specialty. Whole kombu-wrapped spicy cod roe on hot nori rice in Arita lacquerware. Set includes tsukemen dipping noodles. Opens at 7am. Use E-PARK app to queue online before arriving.</p></div><div class="sbsec"><h4>Menu</h4><div class="menu-grid"><div class="menu-item"><div class="mi-name">Mentaiju Set (めんたい重セット)</div><div class="mi-desc">The signature. Whole kombu-wrapped mentaiko on nori rice in lacquerware + tsukemen dipping noodles.</div><div class="mi-price">¥1,980/pax</div></div><div class="menu-item"><div class="mi-name">Extra Mentaiko (追加明太子)</div><div class="mi-desc">Additional serving of spicy cod roe on the side.</div><div class="mi-price">¥500</div></div></div></div><div class="sbsec"><h4>Reviews</h4><div class="sb-revs"><div class="sb-rev"><div class="rs">★★★★</div><div class="rb">Tabelog · 3.7/5</div><div class="rt">"The original. Worth the queue. Mentaiko on rice with the dipping noodles is deeply satisfying. Beautiful lacquerware presentation."</div></div></div></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk ltb" href="https://tabelog.com/en/fukuoka/A4001/A400101/40044310/" target="_blank">Tabelog</a><a class="lnk lgm" href="https://maps.google.com/?q=Ganso+Hakata+Mentaiju+Fukuoka" target="_blank">📍 Maps</a></div></div>'},
+
+unagi:{t:'Yoshizuka Unagiya (吉塚うなぎ屋)',s:'Legendary Eel Since 1873 · Nakasu · Adjacent to Royal Park Canvas',c:'<div class="sbsec"><h4>About</h4><p>Operating since 1873 — over 150 years. Kabayaki-style grilled eel over rice with a secret-recipe sweet soy tare refined over generations. Traditional tatami room. A short walk from Royal Park Canvas.</p></div><div class="sbsec"><h4>Menu</h4><div class="menu-grid"><div class="menu-item"><div class="mi-name">Unaju — Small (鰻重 梅)</div><div class="mi-desc">Small portion eel over rice in lacquer box with secret tare.</div><div class="mi-price">¥3,300</div></div><div class="menu-item"><div class="mi-name">Unaju — Large (鰻重 松)</div><div class="mi-desc">Large portion. Recommended. The tare sauce is extraordinary.</div><div class="mi-price">¥5,500</div></div><div class="menu-item"><div class="mi-name">Uzaku (鰻酢肴)</div><div class="mi-desc">Eel and cucumber in vinegar dressing — perfect starter.</div><div class="mi-price">¥880</div></div><div class="menu-item"><div class="mi-name">Kimosui (肝吸い)</div><div class="mi-desc">Eel liver clear soup. Deeply flavourful add-on.</div><div class="mi-price">¥550</div></div></div></div><div class="sbsec"><h4>Reviews</h4><div class="sb-revs"><div class="sb-rev"><div class="rs">★★★★★</div><div class="rb">TripAdvisor · 4.4/5 (897 reviews)</div><div class="rt">"Best unagi in Kyushu. The sauce is unforgettable, the eel perfectly cooked. The tatami setting adds enormously to the experience."</div></div></div></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk ltb" href="https://tabelog.com/en/fukuoka/A4001/A400101/40000151/" target="_blank">Tabelog</a><a class="lnk lt" href="https://www.tripadvisor.com/Restaurant_Review-g298202-d1410609-Reviews-Yoshizuka_Unagiya.html" target="_blank">TripAdvisor</a><a class="lnk lgm" href="https://maps.google.com/?q=Yoshizuka+Unagiya+Hakata" target="_blank">📍 Maps</a></div></div>'},
+
+hyotan:{t:'Hyotan Sushi (ひょうたん寿司)',s:"Fukuoka's Most Iconic Sushi · Tenjin · Live Abalone & Genkai Sea Fish",c:'<div class="sbsec"><h4>About</h4><p>Fukuoka\'s most famous sushi restaurant for decades. Daily Genkai Sea catch — live abalone, fresh squid, seasonal fish. English and Korean menus available. 2F near Solaria Plaza Tenjin.</p></div><div class="sbsec"><h4>Signature Items</h4><div class="menu-grid"><div class="menu-item"><div class="mi-name">Live Abalone (活鮑)</div><div class="mi-desc">The signature. Must-order. Incredibly fresh, buttery texture.</div><div class="mi-price">Market price ~¥1,500+</div></div><div class="menu-item"><div class="mi-name">Aji (Horse Mackerel)</div><div class="mi-desc">In-season summer fish from Genkai Sea. Delicate, clean flavour.</div><div class="mi-price">¥200–300/pc</div></div><div class="menu-item"><div class="mi-name">Mentaiko Maki</div><div class="mi-desc">Fukuoka specialty roll. Spicy cod roe wrapped in nori.</div><div class="mi-price">¥500–700</div></div><div class="menu-item"><div class="mi-name">Chef Omakase Set</div><div class="mi-desc">Daily seasonal selection. Best value for variety.</div><div class="mi-price">¥3,000–5,000/pax</div></div></div></div><div class="sbsec"><h4>Reviews</h4><div class="sb-revs"><div class="sb-rev"><div class="rs">★★★★★</div><div class="rb">Google · 4.4/5</div><div class="rt">"Extraordinary freshness. Best sushi in Fukuoka without question. We had live abalone — unforgettable. English menu was a lifesaver."</div></div></div></div><div class="sbsec"><h4>Tip</h4><p>⚠ Peak queue: 12pm–2pm. Go at 11am opening or 6:30pm to avoid 1–2hr waits.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk ltb" href="https://tabelog.com/en/fukuoka/A4001/A400102/40000071/" target="_blank">Tabelog</a><a class="lnk lgm" href="https://maps.google.com/?q=Hyotan+Sushi+Tenjin+Fukuoka" target="_blank">📍 Maps</a></div></div>'},
+
+tempura:{t:'Tempura Hirao (天ぷら処ひらお)',s:'1979 Legendary Hakata Tempura · Best Value in Fukuoka · Set from ¥770',c:'<div class="sbsec"><h4>About</h4><p>A Fukuoka institution since 1979. Counter-style where chefs fry each piece individually to your pace. Set from ¥770 — outrageously good value. Free mentaiko condiment on the counter is a local touch unique to Fukuoka.</p></div><div class="sbsec"><h4>Menu</h4><div class="menu-grid"><div class="menu-item"><div class="mi-name">Okonomi Teishoku (おこのみ定食)</div><div class="mi-desc">The signature set. Mix of seasonal veg + seafood tempura, rice, miso, pickles.</div><div class="mi-price">¥770</div></div><div class="menu-item"><div class="mi-name">Anago (Sea Eel)</div><div class="mi-desc">Delicate sea eel in ultra-light batter. Popular add-on.</div><div class="mi-price">¥180/pc</div></div><div class="menu-item"><div class="mi-name">Kakiage (かき揚げ)</div><div class="mi-desc">Mixed vegetable fritter. Crispy and delicious.</div><div class="mi-price">¥150/pc</div></div><div class="menu-item"><div class="mi-name">Mentaiko (明太子) — FREE</div><div class="mi-desc">Free spicy cod roe condiment on counter. Uniquely Fukuoka.</div><div class="mi-price">Free</div></div></div></div><div class="sbsec"><h4>Reviews</h4><div class="sb-revs"><div class="sb-rev"><div class="rs">★★★★★</div><div class="rb">TripAdvisor · 4.4/5 (448 reviews)</div><div class="rt">"Best value meal in all of Fukuoka. The tempura is absolutely perfect, ultra-light batter. Cannot believe the price. Queue moves fast."</div></div></div></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk ltb" href="https://tabelog.com/en/fukuoka/A4001/A400101/40001990/" target="_blank">Tabelog</a><a class="lnk lt" href="https://www.tripadvisor.com/Restaurant_Review-g298202-d1397994-Reviews-Tempura_Hirao.html" target="_blank">TripAdvisor</a><a class="lnk lgm" href="https://maps.google.com/?q=Tempura+Hirao+Hakata" target="_blank">📍 Maps</a></div></div>'},
+
+yatai:{t:'Fukuoka Yatai Stalls (屋台)',s:'Cultural Icon · Nakasu Strip + Tenjin Strip · Open 6pm–2am · Cash Only',c:'<div class="sbsec"><h4>About</h4><p>Yatai are Fukuoka\'s iconic open-air street food stalls — about 100 across the city. Each stall seats 8–15 customers shoulder-to-shoulder. The chef cooks right in front of you under an awning or tarpaulin on the pavement.</p></div><div class="sbsec"><h4>Must-Try Dishes</h4><div class="menu-grid"><div class="menu-item"><div class="mi-name">Hakata Tonkotsu Ramen</div><div class="mi-desc">Rich pork bone broth, thin noodles. The Fukuoka classic.</div><div class="mi-price">¥800–1,000</div></div><div class="menu-item"><div class="mi-name">Yaki Ramen (焼きラーメン)</div><div class="mi-desc">Fried ramen — invented at Tenjin yatai in 1968. Only in Fukuoka.</div><div class="mi-price">¥900–1,200</div></div><div class="menu-item"><div class="mi-name">Yakitori (焼き鳥)</div><div class="mi-desc">Grilled chicken skewers over charcoal. Order several.</div><div class="mi-price">¥150–250/stick</div></div><div class="menu-item"><div class="mi-name">Hitokuchi Gyoza</div><div class="mi-desc">Bite-sized Fukuoka dumplings. Crispy and addictive.</div><div class="mi-price">¥500/plate</div></div></div></div><div class="sbsec"><h4>Nakasu vs Tenjin</h4><p><b>Nakasu (Day 1):</b> More atmospheric, neon reflections on the river, more tourist-friendly.<br><b>Tenjin (Day 9):</b> More local feeling, yaki ramen was invented here in 1968.</p></div><div class="sbsec"><h4>Reviews</h4><div class="sb-revs"><div class="sb-rev"><div class="rs">★★★★★</div><div class="rb">TripAdvisor · 4.5/5</div><div class="rt">"This is WHY you visit Fukuoka. Shoulder-to-shoulder, chef grilling right in front of you, steam rising, neon reflections on the river. Unforgettable."</div></div></div></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk lgm" href="https://maps.google.com/?q=Nakasu+Yatai+Fukuoka" target="_blank">📍 Nakasu Yatai</a><a class="lnk lgm" href="https://maps.google.com/?q=Tenjin+Yatai+Fukuoka" target="_blank">📍 Tenjin Yatai</a></div></div>'},
+
+issou:{t:'Hakata Issou Ramen (博多一双)',s:'Top-100 Tabelog Tonkotsu · 5 Consecutive Years · Near Hakata Station',c:'<div class="sbsec"><h4>About</h4><p>Ranked Top 100 on Tabelog for 5 consecutive years. Pure white tonkotsu broth with zero porky odour achieved through meticulous double-boiling. Flat thin noodles, chashu pork, house-made pickled ginger.</p></div><div class="sbsec"><h4>How to Order Like a Local</h4><p>• Specify "kata" (firm) or "harigane" (very firm) noodles — the Hakata way<br>• Order "kaedama" (extra noodles ¥100) when bowl is almost done<br>• No-frills: counter seating, short queue ~10–20 min</p></div><div class="sbsec"><h4>Menu</h4><div class="menu-grid"><div class="menu-item"><div class="mi-name">Hakata Ramen (博多らーめん)</div><div class="mi-desc">Pure white tonkotsu. The definitive bowl.</div><div class="mi-price">¥900</div></div><div class="menu-item"><div class="mi-name">Special Ramen (特製)</div><div class="mi-desc">Extra chashu, ajitsuke tamago (soy egg).</div><div class="mi-price">¥1,200</div></div></div></div><div class="sbsec"><h4>Reviews</h4><div class="sb-revs"><div class="sb-rev"><div class="rs">★★★★★</div><div class="rb">Tabelog · 3.9/5</div><div class="rt">"The purest expression of Hakata ramen. Broth is white as milk, deeply flavoured, no hint of porky smell. Every bowl is perfect."</div></div></div></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk ltb" href="https://tabelog.com/en/fukuoka/A4001/A400101/40034948/" target="_blank">Tabelog</a><a class="lnk lgm" href="https://maps.google.com/?q=Hakata+Issou+Ramen+Fukuoka" target="_blank">📍 Maps</a></div></div>'},
+
+ikkousha:{t:'Ikkousha Ramen (一幸舎)',s:'Solid Tonkotsu Chain · Optional · Multiple Locations Open Late',c:'<div class="sbsec"><h4>Verdict</h4><p>⚠ <b>Optional.</b> Reliable tonkotsu chain near Hakata/Tenjin. Good if Hakata Issou has a long queue or you need late-night ramen. Quality is good but Issou is noticeably more exceptional.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk ltb" href="https://tabelog.com/en/fukuoka/A4001/A400101/40001458/" target="_blank">Tabelog</a><a class="lnk lgm" href="https://maps.google.com/?q=Ikkousha+Ramen+Hakata" target="_blank">📍 Maps</a></div></div>'},
+
+hamatake:{t:'Uogashi Hamatake (魚がし浜竹)',s:'Market-Style Fresh Seafood · Optional',c:'<div class="sbsec"><h4>Verdict</h4><p>⚠ <b>Optional.</b> Market-style fresh seafood where you pick your fish from live tanks. Best at lunch when fish is freshest. Skip if doing Hyotan Sushi on the same trip.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk lgm" href="https://maps.google.com/?q=Uogashi+Hamatake+Fukuoka" target="_blank">📍 Google Maps</a></div></div>'},
+
+genkiippai:{t:'Hakata Genki Ippai!! (博多元気一杯!!)',s:'Top-100 Tabelog · 6 Consecutive Years · Near Hakata Station',c:'<div class="sbsec"><h4>About</h4><p>Ranked Top 100 on Tabelog for 6 consecutive years — a record in Fukuoka. Pure white tonkotsu broth. A self-taught chef\'s lifetime of refinement. The perfect final ramen before flying home.</p></div><div class="sbsec"><h4>Menu</h4><div class="menu-grid"><div class="menu-item"><div class="mi-name">Hakata Ramen (元気一杯!)</div><div class="mi-desc">The signature. Astonishingly white and pure. Request "kata" noodles.</div><div class="mi-price">¥900</div></div></div></div><div class="sbsec"><h4>Reviews</h4><div class="sb-revs"><div class="sb-rev"><div class="rs">★★★★★</div><div class="rb">Tabelog · 4.0/5</div><div class="rt">"The whitest, purest broth I\'ve ever seen. Hakata ramen perfection."</div></div></div></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk ltb" href="https://tabelog.com/en/fukuoka/A4001/A400101/40023432/" target="_blank">Tabelog</a><a class="lnk lgm" href="https://maps.google.com/?q=Hakata+Genki+Ippai+Fukuoka" target="_blank">📍 Maps</a></div></div>'},
+
+gyoza:{t:'Tetsunabe Gyoza (鉄なべ)',s:"Hakata's Bite-Sized Iron-Pan Dumplings",c:'<div class="sbsec"><h4>About</h4><p>Hitokuchi gyoza — tiny bite-sized dumplings crisped in a flat iron pan. A Hakata specialty almost unknown outside Kyushu. Order 3 pans per person minimum. ~¥2,000/pax.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk ltb" href="https://tabelog.com/en/fukuoka/A4001/A400101/40000310/" target="_blank">Tabelog</a><a class="lnk lgm" href="https://maps.google.com/?q=Tetsunabe+Gyoza+Fukuoka" target="_blank">📍 Maps</a></div></div>'},
+
+motsu:{t:'Hakata Motsu Nabe Yamanaka',s:'Fukuoka Signature Offal Hot Pot · Nakasu Area',c:'<div class="sbsec"><h4>About</h4><p>Motsu nabe — beef/pork offal hot pot in rich miso or soy broth with cabbage, garlic chives, tofu, and glass noodles. Deeply flavourful, very local. One of the most respected in Nakasu.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk lgm" href="https://maps.google.com/?q=Motsu+Nabe+Yamanaka+Nakasu+Fukuoka" target="_blank">📍 Google Maps</a></div></div>'},
+
+fishman:{t:'Hakata Robata Fishman Izakaya',s:'Robata-Style Seafood · Hakata · English-Speaking Staff',c:'<div class="sbsec"><h4>About</h4><p>Eclectic robata-style izakaya with charcoal-grilled fresh Genkai Sea seafood. English-speaking staff, wide menu, friendly atmosphere. ~¥2,500–3,500/pax.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk lgm" href="https://maps.google.com/?q=Hakata+Robata+Fishman+Fukuoka" target="_blank">📍 Maps</a></div></div>'},
+
+champon:{t:'Shikairou — Birthplace of Nagasaki Champon',s:'Est. 1899 · Nagasaki',c:'<div class="sbsec"><h4>About</h4><p>The restaurant that invented Nagasaki champon in 1899. Creamy pork-seafood broth with thick noodles and vegetables. Museum on 2F. A must in Nagasaki.</p></div><div class="sbsec"><h4>Menu</h4><div class="menu-grid"><div class="menu-item"><div class="mi-name">Nagasaki Champon</div><div class="mi-desc">The original. Creamy pork-seafood broth, thick noodles, mountain of vegetables.</div><div class="mi-price">¥1,200–1,800</div></div><div class="menu-item"><div class="mi-name">Sara Udon</div><div class="mi-desc">Crispy noodles with champon toppings — dry version.</div><div class="mi-price">¥1,100–1,500</div></div></div></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk lt" href="https://www.tripadvisor.com/Restaurant_Review-g298566-d1397891-Reviews-Shikairou.html" target="_blank">TripAdvisor</a><a class="lnk lgm" href="https://maps.google.com/?q=Shikairou+Nagasaki" target="_blank">📍 Maps</a></div></div>'},
+
+yanagawaeel:{t:'Seiro Mushi Steamed Eel',s:"Yanagawa's Signature Dish · Wakaebi or Ohana Restaurant",c:'<div class="sbsec"><h4>About</h4><p>Yanagawa\'s famous preparation — eel steamed over rice in a wooden box with sweet soy tare. Softer and juicier texture vs kabayaki grilling. Completely different from Yoshizuka Unagiya.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk lgm" href="https://maps.google.com/?q=Wakaebi+Yanagawa+Eel" target="_blank">📍 Wakaebi, Yanagawa</a></div></div>'},
+
+asobeef:{t:'Aso Aka-ushi Red Cattle Beef',s:'Local Volcanic Grassland-Raised Beef · Aso Area',c:'<div class="sbsec"><h4>About</h4><p>Aso red cattle raised on volcanic grasslands. Slower-growing, richer and more complex flavour than standard wagyu. Available as beef bowls, steaks, and set meals at several Aso area restaurants. ~¥1,500–2,500/pax.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk lgm" href="https://maps.google.com/?q=Aso+Red+Cattle+Beef+Restaurant" target="_blank">📍 Aso Restaurants</a></div></div>'},
+
+jigokumushi:{t:"Hell Steam Cooking (Jigoku-mushi)",s:"Beppu's Unique Volcanic Steam Cuisine",c:'<div class="sbsec"><h4>About</h4><p>Cook food over natural volcanic hot spring steam (~100°C) in steam boxes over fumaroles. Vegetables, eggs, corn, meat — cooked in minutes. Natural sweetness and umami enhanced by the steam. A unique experience only possible in Beppu.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk lgm" href="https://maps.google.com/?q=Jigoku+Mushi+Kobo+Beppu" target="_blank">📍 Jigoku-mushi Kobo</a></div></div>'},
+
+uminonakamichi:{t:'Uminonakamichi Seaside Park',s:'Coastal Park on Hakata Bay · 20 min from Hakata',c:'<div class="sbsec"><h4>About</h4><p>Vast coastal park on the Uminonakamichi peninsula. Massive sunflower fields in late July–August, 3km seaside walks, cycling paths, and sea views on both sides. Rent bikes inside the park. Very refreshing on a clear day.</p></div><div class="sbsec"><h4>Practical Info</h4><p>🕐 9am–5:30pm · Closed Mondays<br>💴 Entry ¥450/pax · Bike rental ¥400/pax</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk ls" href="https://uminaka.jp/en/" target="_blank">Official Site</a><a class="lnk lgm" href="https://maps.google.com/?q=Uminonakamichi+Seaside+Park" target="_blank">📍 Maps</a></div></div>'},
+
+fukuokatower:{t:'Fukuoka Tower',s:"Japan's Highest Seaside Tower · 234m · Momochihama",c:'<div class="sbsec"><h4>About</h4><p>At 234m, Japan\'s tallest seaside tower. Observation deck at 123m with 360° views of Hakata Bay, city, and mountains. Beautiful at sunset. Adjacent Momochihama Beach is great for an after-visit walk.</p></div><div class="sbsec"><h4>Practical Info</h4><p>💴 ¥800/pax · 🕐 9:30am–10pm daily</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk ls" href="https://www.fukuokatower.co.jp/en/" target="_blank">Official Site</a><a class="lnk lgm" href="https://maps.google.com/?q=Fukuoka+Tower" target="_blank">📍 Maps</a></div></div>'},
+
+itoshima:{t:'Itoshima Peninsula',s:'Sakurai Sea Torii + Meoto Iwa · 40 min by JR',c:'<div class="sbsec"><h4>About</h4><p>The Sakurai Shrine sea torii gate (red gate rising from the sea at low tide) and Meoto Iwa (Husband and Wife Rocks) connected by a shimenawa rope are the two most iconic sights on this wild, beautiful coastline.</p></div><div class="sbsec"><h4>Tips</h4><p>• Visit sea torii at low tide — check tide charts<br>• Morning light gives best photography<br>• Meoto Iwa is 10–15 min walk from the torii</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk lgm" href="https://maps.google.com/?q=Sakurai+Shrine+Sea+Torii+Itoshima" target="_blank">📍 Sakurai Sea Torii</a><a class="lnk lgm" href="https://maps.google.com/?q=Meoto+Iwa+Itoshima" target="_blank">📍 Meoto Iwa</a></div></div>'},
+
+sup:{t:'SUP Stand-Up Paddleboarding — Itoshima',s:'Optional · Flat-Water SUP · Coastal Backdrop',c:'<div class="sbsec"><h4>About</h4><p>Flat-water SUP on calm Itoshima Bay. August is peak season. Suitable for beginners. Rental ¥3,500/2hrs, lesson ¥5,000/2hrs. Lady Wind, Beach Store, or Itoshima Surf Center TF.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk lgm" href="https://maps.google.com/?q=Lady+Wind+SUP+Itoshima" target="_blank">📍 Lady Wind</a></div></div>'},
+
+itoshimafish:{t:'Itoshima Fish Market Grill',s:'Fresh Genkai Sea Catch · Pick Your Fish',c:'<div class="sbsec"><h4>About</h4><p>Select your catch from ice beds at small fish market stalls, have it grilled or prepared as sashimi on-site. Same-morning freshness. Try sea bream, horse mackerel, or squid.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk lgm" href="https://maps.google.com/?q=Itoshima+Fish+Market" target="_blank">📍 Itoshima Fish Market</a></div></div>'},
+
+yanagawa:{t:'Yanagawa Canal Boat Cruise (どんこ舟)',s:'Little Venice of Kyushu · 70-min Flat-Bottomed Boat · ¥1,800/pax',c:'<div class="sbsec"><h4>About</h4><p>Yanagawa has 930km of feudal-era canals from the 1600s. The donko-bune cruise is 70 minutes through narrow willow-lined waterways passing samurai estates. Boatman punts and sings traditional folk songs. Deeply romantic.</p></div><div class="sbsec"><h4>Practical Info</h4><p>💴 ¥1,800/pax · 🕐 9am–5pm · Book ahead Aug/Sep</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk ls" href="https://www.yanagawa-net.com/en/cruise/" target="_blank">Official Info</a><a class="lnk lgm" href="https://maps.google.com/?q=Yanagawa+Canal+Cruise" target="_blank">📍 Maps</a></div></div>'},
+
+ohori:{t:'Ohori Park + Fukuoka Castle Ruins',s:"Fukuoka's Best Urban Park · Lake Circuit + Castle Walls",c:'<div class="sbsec"><h4>About</h4><p>Built around a large lake that formed Fukuoka Castle\'s outer moat. 2km jogging and walking circuit, lily pads, stone bridges. Adjacent castle ruins have impressive stone walls and hilltop views. Very local and peaceful.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk lgm" href="https://maps.google.com/?q=Ohori+Park+Fukuoka" target="_blank">📍 Ohori Park</a><a class="lnk lgm" href="https://maps.google.com/?q=Fukuoka+Castle+Ruins" target="_blank">📍 Castle Ruins</a></div></div>'},
+
+baycruise:{t:'Hakata Bay / Nakasu River Cruise',s:'Optional · 45-min Evening Cruise · Departs Nishinakasu Pier',c:'<div class="sbsec"><h4>About</h4><p>45-min evening cruise from Nishinakasu pier (3 min walk from hotel). Passes Canal City, PayPay Dome, Fukuoka Tower — all lit up at night. Very romantic for couples. Departs 7pm and 9pm. ~¥1,200/pax.</p></div><div class="sbsec"><h4>Book</h4><div class="lnks"><a class="lnk lk" href="https://www.klook.com/en-SG/activity/search/?query=Fukuoka+boat+cruise" target="_blank">Klook</a><a class="lnk lgm" href="https://maps.google.com/?q=Nishinakasu+Pier+Fukuoka" target="_blank">📍 Pier</a></div></div>'},
+
+nagasaki:{t:'Glover Garden — Clifftop Colonial Estate',s:'Nagasaki · ¥660/pax · Sweeping Harbour Panorama',c:'<div class="sbsec"><h4>About</h4><p>Preserved hilltop estate with Meiji-era foreign merchants\' residences. Thomas Glover\'s home (1863) is Japan\'s oldest Western-style wooden building still standing. Terraced Japanese gardens overlooking Nagasaki\'s harbour and islands.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk lt" href="https://www.tripadvisor.com/Attraction_Review-g298566-d320372-Reviews-Glover_Garden.html" target="_blank">TripAdvisor</a><a class="lnk lgm" href="https://maps.google.com/?q=Glover+Garden+Nagasaki" target="_blank">📍 Maps</a></div></div>'},
+
+inasayama:{t:'Inasayama Ropeway — Nagasaki',s:"One of Japan's Top-3 Night Views · Mt. Inasa (333m)",c:'<div class="sbsec"><h4>About</h4><p>Cable car to Mt. Inasa summit. Nagasaki\'s harbour completely encircled by mountains and islands — one of Japan\'s most spectacular panoramas. Official Top 3 night views. ¥1,250/pax return.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk lt" href="https://www.tripadvisor.com/Attraction_Review-g298566-d1412197-Reviews-Inasayama_Ropeway.html" target="_blank">TripAdvisor</a><a class="lnk lgm" href="https://maps.google.com/?q=Inasayama+Ropeway+Nagasaki" target="_blank">📍 Maps</a></div></div>'},
+
+carrental:{t:'Rental Car — Days 4–8',s:'Toyota / Nippon Rent-A-Car · IDP Required · ETC Card for Tolls',c:'<div class="sbsec"><h4>What You Need</h4><p>• IDP — apply at Singapore AA (~2 weeks)<br>• Bring IDP + Singapore driving licence<br>• Request ETC card (~¥550/day) for cashless expressway tolls<br>• Japan drives on the LEFT<br>• Expressways signed in English</p></div><div class="sbsec"><h4>Route Overview</h4><p>Day 4 pm: Pick up Hakata → Day 5: Aso → Kurokawa → Day 6: Kurokawa → Takachiho → Yufuin → Day 7: Yufuin → Kokonoe → Yufuin → Day 8: Yufuin → Beppu → Fukuoka (return)</p></div><div class="sbsec"><h4>Book</h4><div class="lnks"><a class="lnk lp" href="https://rent.toyota.co.jp/en/" target="_blank">Toyota Rent-A-Car</a><a class="lnk ls" href="https://www.nipponrentacar.co.jp/english/" target="_blank">Nippon Rent-A-Car</a><a class="lnk ls" href="https://www.tocoo.jp/en" target="_blank">TOCOO Compare</a></div></div><div class="sb-tip">💡 Book 2–3 months ahead for Aug/Sep. Get the ETC card — you\'ll use it every single day on the loop.</div>'},
+
+aso:{t:'Mt. Aso — Active Volcano',s:"Naka-dake Crater · World's Largest Caldera · Check JMA Alert Daily",c:'<div class="sbsec"><h4>About</h4><p>Mt. Aso\'s caldera is 25km wide — large enough to contain entire towns. The active Naka-dake crater has a steaming turquoise volcanic lake ringed by stark grey walls. Walking to the crater rim when open is one of Japan\'s most dramatic nature experiences.</p></div><div class="sbsec"><h4>⚠ Check JMA Alert Daily</h4><p>Level 1: open. Level 2+: closed. Check at jma.go.jp 1–2 days before visit. Most late Aug/Sep visits proceed at Level 1.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk ls" href="https://www.jma.go.jp/en/volcano/volcanos.html" target="_blank">JMA Volcano Alerts</a><a class="lnk ls" href="https://www.aso.ne.jp/en/" target="_blank">Aso Tourism</a><a class="lnk lgm" href="https://maps.google.com/?q=Mt+Aso+Nakadake+Crater" target="_blank">📍 Maps</a></div></div>'},
+
+kusasenri:{t:'Kusasenrigahama Grasslands',s:'Ancient Caldera Prairie · Horseback Riding · Mt. Aso Backdrop',c:'<div class="sbsec"><h4>About</h4><p>Vast ancient meadow inside the Aso caldera rim. Emerald green in summer, dotted with volcanic craters and a crater lake. Mt. Aso and the caldera walls create an epic backdrop. Horseback riding available from on-site operators (~¥800/pax).</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk lgm" href="https://maps.google.com/?q=Kusasenrigahama+Aso" target="_blank">📍 Google Maps</a></div></div>'},
+
+takachiho:{t:'Takachiho Gorge (高千穂峡)',s:'Hexagonal Basalt Cliffs · Manai Waterfall · TripAdvisor 4.8/5',c:'<div class="sbsec"><h4>About</h4><p>One of Japan\'s most spectacular natural formations. Created by Mt. Aso lava flows over 90,000–270,000 years ago. Narrow channels with 80m walls of perfectly hexagonal basalt. Crystal-clear turquoise Gokase River. The 17m Manai Waterfall is best seen from a rowboat beneath it.</p></div><div class="sbsec"><h4>Visiting Tips</h4><p>• Arrive before 10:30am to beat tour groups<br>• Park at Oshioi lot ¥500 (closest to boats)<br>• Morning light makes turquoise water glow most vividly<br>• Walk the full gorge path before or after your boat</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk lt" href="https://www.tripadvisor.com/Attraction_Review-g1121285-d1412296-Reviews-Takachiho_Gorge.html" target="_blank">TripAdvisor</a><a class="lnk ls" href="https://takachiho-kanko.info/en/" target="_blank">Official Tourism</a><a class="lnk lgm" href="https://maps.google.com/?q=Takachiho+Gorge" target="_blank">📍 Maps</a></div></div>'},
+
+takachihboat:{t:'Takachiho Gorge Rowboat',s:'⚠ Book EXACTLY 14 Days Ahead at 9am JST · ¥4,100–5,100/boat',c:'<div class="sbsec"><h4>The Experience</h4><p>Row your own flat-bottomed boat right up to the base of Manai Waterfall. Rainbows form in the mist on sunny mornings. 30-minute rental for 2 people. The basalt walls tower 80m above you. One of Japan\'s most magical outdoor experiences.</p></div><div class="sbsec"><h4>⚠ Booking is Critical</h4><p>Opens at <b>exactly 9am JST, 14 days before your visit date.</b> Weekends sell out in minutes. For Day 6 visit (Thu 4 Sep): set alarm for <b>9:00am JST on Sat 21 Aug.</b> Have the booking page open and payment ready. Online only — no phone bookings.</p></div><div class="sbsec"><h4>Book</h4><div class="lnks"><a class="lnk lp" href="https://takachiho-kanko.info/en/" target="_blank">Official Booking</a><a class="lnk lgm" href="https://maps.google.com/?q=Takachiho+Gorge+Boat" target="_blank">📍 Boat Launch</a></div></div>'},
+
+amano:{t:"Amano Yasugawara Shrine + Sacred Cave",s:"Japan's Most Sacred Cave · Stone Tower Riverbed",c:'<div class="sbsec"><h4>About</h4><p>In Japanese mythology, this is the cave where sun goddess Amaterasu hid, plunging the world into darkness. The riverbed approach is carpeted with thousands of small stone towers stacked by visitors — an extraordinary spiritual sight. One of the most atmospheric places in Japan.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk lgm" href="https://maps.google.com/?q=Amano+Yasugawara+Shrine+Takachiho" target="_blank">📍 Maps</a><a class="lnk lt" href="https://www.tripadvisor.com/Attraction_Review-g1121285-d5887296-Reviews-Amanoyasukawara_Shrine.html" target="_blank">TripAdvisor</a></div></div>'},
+
+kinrin:{t:'Lake Kinrin (金鱗湖)',s:"Yufuin's Mystical Onsen Lake · Best Before 8am for Morning Mist",c:'<div class="sbsec"><h4>About</h4><p>Hot spring water bubbles up from the lake bottom, warming it and creating beautiful morning mist. Must visit before 8am for the full misty effect. Surrounded by willows and old ryokans. Like a Studio Ghibli film scene. Free — 10 min walk from most ryokans.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk lgm" href="https://maps.google.com/?q=Lake+Kinrin+Yufuin" target="_blank">📍 Google Maps</a></div></div>'},
+
+yunotsubo:{t:'Yunotsubo Kaido Street',s:"Yufuin's Fairy-Tale Main Street · Cafes, Craft Shops, Wagyu Burgers",c:'<div class="sbsec"><h4>About</h4><p>800m pedestrian street from station to Lake Kinrin. Every shop individually designed. Notable: B-Speak roll cake (pre-order on check-in), local wagyu beef burgers, handcrafted glass shops, matcha soft-serve. Visit before 11am for fewer crowds.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk lgm" href="https://maps.google.com/?q=Yunotsubo+Street+Yufuin" target="_blank">📍 Google Maps</a></div></div>'},
+
+kokonoe:{t:"Kokonoe Yume Suspension Bridge",s:"Japan's Highest Pedestrian Bridge · 173m · Two Waterfalls Visible",c:'<div class="sbsec"><h4>About</h4><p>390m long, suspended 173m above Naruko River gorge at 777m altitude. Views of Kuju mountain range and two named waterfalls (Japan Top 100 Waterfall). Glass viewing panel at midpoint. Thrilling on windy days. ¥500/pax.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk ls" href="https://www.yumeooturihashi.com/english/" target="_blank">Official Site</a><a class="lnk lt" href="https://www.tripadvisor.com/Attraction_Review-g1121315-d2243764-Reviews-Kokonoe_Yume_Suspension_Bridge.html" target="_blank">TripAdvisor</a><a class="lnk lgm" href="https://maps.google.com/?q=Kokonoe+Yume+Bridge" target="_blank">📍 Maps</a></div></div>'},
+
+tadewara:{t:'Tadewara Wetlands — Kuju National Park',s:'Optional · Highland Wetland 1,240m · Almost No Tourists',c:'<div class="sbsec"><h4>About</h4><p>Japan\'s largest highland wetland at 1,240m altitude. Wooden boardwalk through vast reed meadows with dormant volcanic peaks on the horizon. Almost completely uncrowded. In early Sep reed grass begins turning gold at the tips.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk lgm" href="https://maps.google.com/?q=Tadewara+Wetlands+Kuju" target="_blank">📍 Google Maps</a></div></div>'},
+
+beppu:{t:'Beppu Hell Springs (地獄めぐり)',s:'Umi Jigoku (Sea Hell) + Kamado Jigoku (Cooking Hell)',c:'<div class="sbsec"><h4>About</h4><p>Beppu\'s spectacular hot spring pools with dramatically different colours. Umi Jigoku (cobalt blue, 98°C) and Kamado Jigoku (multi-coloured pools, demon statue, free foot soak, steamed snack stalls) are the two best. ¥400/pax each.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk ls" href="https://www.beppu-jigoku.com/english/" target="_blank">Official Site</a><a class="lnk lt" href="https://www.tripadvisor.com/Attraction_Review-g298207-d635001-Reviews-Umi_Jigoku.html" target="_blank">TripAdvisor</a><a class="lnk lgm" href="https://maps.google.com/?q=Umi+Jigoku+Beppu" target="_blank">📍 Maps</a></div></div>'},
+
+beppuropeway:{t:'Beppu Ropeway — Mt. Tsurumi (1,375m)',s:'7-min Cable Car · Panoramic Bay Views',c:'<div class="sbsec"><h4>About</h4><p>Cable car to Mt. Tsurumi summit at 1,375m in 7 minutes. Panoramic views over Beppu Bay and city, and on clear days Shikoku island across the Bungo Channel. ¥1,800/pax return.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk lgm" href="https://maps.google.com/?q=Beppu+Ropeway" target="_blank">📍 Google Maps</a></div></div>'},
+
+sandbath:{t:'Takegawara Sand Bath (竹瓦温泉)',s:'Optional · 130-Year-Old Bathhouse · Volcanic Sand at 42°C',c:'<div class="sbsec"><h4>About</h4><p>Staff bury you in naturally heated volcanic sand (42°C) at this 1879 bathhouse. 10–15 minutes immersion. Heat penetrates deep into muscles. Deeply relaxing and unique to Beppu. ¥1,500/pax.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk lt" href="https://www.tripadvisor.com/Attraction_Review-g298207-d1414001-Reviews-Takegawara_Onsen.html" target="_blank">TripAdvisor</a><a class="lnk lgm" href="https://maps.google.com/?q=Takegawara+Onsen+Beppu" target="_blank">📍 Maps</a></div></div>'},
+
+teamlab:{t:'teamLab Forest Fukuoka',s:'Immersive Digital Art · BOSS E·ZO FUKUOKA · ¥3,200/pax',c:'<div class="sbsec"><h4>About</h4><p>Vast interactive digital art installation. Hunt creatures with your smartphone, a room where your body shapes the environment, crystal fireworks, forest of resonating lamps. Spectacular for couples. Book online 1–2 days ahead.</p></div><div class="sbsec"><h4>Practical Info</h4><p>🕐 10am–9pm (last entry 8pm)<br>💴 ¥3,200/pax · Book ahead for weekends</p></div><div class="sbsec"><h4>Book</h4><div class="lnks"><a class="lnk lp" href="https://forest.teamlab.art/fukuoka/" target="_blank">Official teamLab Forest</a><a class="lnk lk" href="https://www.klook.com/en-SG/activity/search/?query=teamlab+fukuoka" target="_blank">Klook</a><a class="lnk lgm" href="https://maps.google.com/?q=teamLab+Forest+Fukuoka" target="_blank">📍 Maps</a></div></div>'},
+
+canalcity:{t:'Canal City Hakata + Tenjin Underground',s:'Free 8pm Water Show · Japan\'s Longest Underground Mall',c:'<div class="sbsec"><h4>About</h4><p><b>Canal City:</b> 250+ shops, cinemas, restaurants, and free 8pm water + light show (anime-inspired projections + fountain, every hour from 8pm).<br><b>Tenjin Chikagai:</b> Japan\'s largest underground shopping street at 600m, 150 shops.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk ls" href="https://canalcity.co.jp/en/" target="_blank">Canal City Official</a><a class="lnk lgm" href="https://maps.google.com/?q=Canal+City+Hakata" target="_blank">📍 Canal City</a><a class="lnk lgm" href="https://maps.google.com/?q=Tenjin+Underground+Fukuoka" target="_blank">📍 Tenjin Underground</a></div></div>'},
+
+minou:{t:'Minou Waterfall & Forest Trail',s:'33m Waterfall · 2km Forested Gorge · 20 min from Hakata',c:'<div class="sbsec"><h4>About</h4><p>A 2km forested gorge trail leads to a stunning 33m waterfall. Lush Japanese maple canopy. Cool microclimate — genuinely refreshing in August heat. Famous for fried maple leaf tempura at stalls en route.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk lgm" href="https://maps.google.com/?q=Minou+Waterfall+Fukuoka" target="_blank">📍 Google Maps</a></div></div>'},
+
+nanzoin:{t:"Nanzoin Temple — World's Largest Bronze Reclining Buddha",s:'41m Long · 11m Tall · Forested Hillside in Sasaguri',c:'<div class="sbsec"><h4>About</h4><p>Houses the world\'s largest bronze reclining Buddha — 41m long, 11m tall, 300 tonnes. Forested hillside temple with a green labyrinth of statues, lanterns and streams. The scale is genuinely shocking in person. JR Fukuhokuyutaka Line from Hakata, 27 min, ¥380/pax.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk lt" href="https://www.tripadvisor.com/Attraction_Review-g298202-d1414087-Reviews-Nanzoin_Temple.html" target="_blank">TripAdvisor</a><a class="lnk lgm" href="https://maps.google.com/?q=Nanzoin+Temple+Sasaguri" target="_blank">📍 Maps</a></div></div>'},
+
+fruitpicking:{t:'Fruit Picking — Okagaki / Munakata',s:'Optional · September Season: Grapes & Figs',c:'<div class="sbsec"><h4>About</h4><p>Sep season in Kyushu: grapes and figs. Guided cycling + fruit picking tours in Okagaki Town (~45 min from Fukuoka). ~SGD 25/pax via Activity Japan.</p></div><div class="sbsec"><h4>Book</h4><div class="lnks"><a class="lnk ls" href="https://www.activity-japan.com/en/area/fukuoka/" target="_blank">Activity Japan</a><a class="lnk lk" href="https://www.klook.com/en-SG/activity/search/?query=fruit+picking+fukuoka" target="_blank">Klook</a></div></div>'},
+
+itoshimacafe:{t:'Itoshima Seaside Cafe Strip',s:'Design-Forward Beach Cafes · Shima Kitchen & CAFE APIED',c:'<div class="sbsec"><h4>About</h4><p>Architecturally distinctive cafes built along the Itoshima beachfront. Matcha kakigori, local fruit tarts, handmade pottery, artisan coffee. Very Instagrammable and unlike anything in Fukuoka city.</p></div><div class="sbsec"><h4>Find It</h4><div class="lnks"><a class="lnk lgm" href="https://maps.google.com/?q=Itoshima+Beach+Cafe" target="_blank">📍 Beach Cafes Map</a></div></div>'},
+};
+
+// ── OPEN PANEL ──
+function op(id){
+  var d=panels[id];
+  if(!d)return;
+  var photos=buildPhotos(id);
+  document.getElementById('sb_ttl').textContent=d.t;
+  document.getElementById('sb_body').innerHTML=photos+'<div class="sb-title">'+d.t+'</div><div class="sb-sub">'+d.s+'</div>'+d.c;
+  document.getElementById('sidebar').classList.add('on');
+  document.getElementById('overlay').classList.add('on');
+  document.body.style.overflow='hidden';
+}
+function cp(){
+  document.getElementById('sidebar').classList.remove('on');
+  document.getElementById('overlay').classList.remove('on');
+  document.body.style.overflow='';
+}
+function openAndFly(id,latLng){
+  op(id);
+  // scroll to map section first
+  s('mapSec');
+  flyTo(latLng,id);
+}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')cp();});
+
+// ── INIT MAP after page load ──
+window.addEventListener('load',function(){
+  setTimeout(function(){initMap();},300);
+});
+</script>
+</body>
+</html>
